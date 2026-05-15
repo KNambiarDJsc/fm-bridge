@@ -70,9 +70,48 @@ class PriceMonitor:
         if self._running:
             return
         self._running = True
+        # Restore active trade from journal on startup (survives restarts)
+        self._restore_from_journal()
         self._thread  = threading.Thread(target=self._loop, daemon=True, name="price-monitor")
         self._thread.start()
         log.info("Price monitor started (poll every %ds)", self._settings.price_poll_secs)
+
+    def _restore_from_journal(self) -> None:
+        """On startup, query fm-journal for any ACTIVE trade and resume watching it.
+        This means kill-and-restart of fm-alerts won't silently drop price monitoring.
+        """
+        s = self._settings
+        try:
+            r = requests.get(
+                f"{s.journal_url}/api/trades",
+                params={"status": "ACTIVE", "limit": 1},
+                timeout=4,
+            )
+            if r.status_code != 200:
+                return
+            trades = r.json().get("trades", [])
+            if not trades:
+                log.info("Price monitor: no active trade in journal to restore")
+                return
+            t = trades[0]
+            from alerts.models import ActiveTrade
+            trade = ActiveTrade(
+                symbol          = t.get("symbol", s.default_symbol),
+                verdict         = t.get("verdict", "WAIT"),
+                direction       = t.get("direction", "LONG"),
+                entry_low       = float(t.get("entry_price", 0) * 0.998),
+                entry_high      = float(t.get("entry_price", 0) * 1.002),
+                stop_loss       = float(t.get("stop_loss") or 0),
+                target1         = float(t.get("target1") or 0),
+                target2         = float(t.get("target2") or 0),
+                instrument      = t.get("instrument", ""),
+                execution_score = int(t.get("execution_score") or 0),
+                rr_ratio        = float(t.get("rr_ratio") or 0),
+            )
+            self.update_trade(trade)
+            log.info("Price monitor: restored active trade %s from journal", t.get("id"))
+        except Exception as e:
+            log.debug("Could not restore trade from journal: %s", e)
 
     def stop(self) -> None:
         self._running = False

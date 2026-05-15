@@ -207,7 +207,14 @@ def eod_summary() -> None:
 # ═══════════════════════════════════════════════════════════════
 
 def build_scheduler(price_monitor=None) -> BackgroundScheduler:
-    """Build and return the APScheduler instance with all jobs registered."""
+    """Build and return the APScheduler instance with all jobs registered.
+    
+    Pass price_monitor so morning_briefing can update it after analysis
+    without a circular import (scheduler → app → scheduler).
+    """
+    global _monitor_ref
+    if price_monitor is not None:
+        _monitor_ref = price_monitor
     scheduler = BackgroundScheduler(timezone=IST)
 
     # 9:00 AM IST — pre-market check
@@ -280,17 +287,30 @@ def _send_error_alert(message: str, s) -> None:
     )
 
 
+# Module-level monitor reference — set by build_scheduler(price_monitor=...)
+# This avoids the circular import: scheduler/jobs.py → app.py → scheduler/jobs.py
+_monitor_ref = None
+
+
 def _update_price_monitor(verdict: dict, s) -> None:
-    """Parse FinalVerdict and push ActiveTrade to the price monitor."""
+    """Parse FinalVerdict and push ActiveTrade to the price monitor.
+    Uses _monitor_ref injected at startup — no circular import.
+    """
+    global _monitor_ref
+    if _monitor_ref is None:
+        log.debug("No price monitor registered — skipping trade update")
+        return
     try:
         from alerts.models import ActiveTrade
-        # Import singleton price monitor (set by app.py)
-        from monitors.price_monitor import PriceMonitor
-        # The global monitor is accessed via the app state
-        # This function is called from within the app context
 
         entry = verdict.get("entry_zone", {}) or {}
         hedge = verdict.get("hedge_plan", {}) or {}
+
+        sz_raw = verdict.get("position_sizing", "1") or "1"
+        try:
+            units = int(str(sz_raw).split()[0])
+        except (ValueError, IndexError):
+            units = 1
 
         trade = ActiveTrade(
             symbol          = s.default_symbol,
@@ -307,7 +327,7 @@ def _update_price_monitor(verdict: dict, s) -> None:
             hedge_strike    = hedge.get("strike"),
             ic_short_call   = hedge.get("ic_short_call"),
             ic_short_put    = hedge.get("ic_short_put"),
-            units           = int(verdict.get("position_sizing", "1").split()[0]) if verdict.get("position_sizing") else 1,
+            units           = units,
             rr_ratio        = float(verdict.get("rr_ratio", 0)),
             execution_score = int(verdict.get("execution_score", 0)),
             confidence      = int(verdict.get("confidence_score", 0)),
@@ -317,10 +337,8 @@ def _update_price_monitor(verdict: dict, s) -> None:
             re_entry_window = int((verdict.get("wait_details") or {}).get("re_entry_window_minutes", 30)),
         )
 
-        # Import global monitor ref
-        from app import _price_monitor
-        if _price_monitor is not None:
-            _price_monitor.update_trade(trade)
+        _monitor_ref.update_trade(trade)
+        log.info("Price monitor updated: %s %s", trade.symbol, trade.verdict)
 
     except Exception as e:
         log.warning("Could not update price monitor: %s", e)
