@@ -117,6 +117,34 @@ def fmt_morning_briefing(verdict: dict, symbol: str = "NIFTY 50") -> str:
         f"━━━━━━━━━━━━━━━━━━━━━━━━",
     ]
 
+    # ── NEW: Global Cues Block (leads the briefing) ──────────────
+    gcues = v.get("global_cues", {}) or {}
+    if not gcues:
+        gcues = mc  # fallback to macro dict which now has merged global fields
+    gift     = gcues.get("gift_nifty") or mc.get("gift_nifty")
+    gift_prem= gcues.get("gift_premium") or mc.get("gift_premium")
+    usd_inr  = gcues.get("usd_inr") or mc.get("inr_usd")
+    dow_chg  = gcues.get("dow_change_pct") or mc.get("dow_change_pct")
+    nq_chg   = gcues.get("nasdaq_change_pct") or mc.get("nasdaq_change_pct")
+    global_r = gcues.get("global_risk") or mc.get("global_risk", "")
+    events   = gcues.get("events_next_7_days") or mc.get("events_next_7_days", [])
+
+    if gift or usd_inr or dow_chg is not None:
+        lines.append("🌐 <b>GLOBAL CUES</b>")
+        if gift:
+            prem_str = f"{'🟢 +' if (gift_prem or 0) > 0 else '🔴 '}{gift_prem:.0f}pts premium"
+            lines.append(f"GIFT Nifty: <b>₹{gift:,.0f}</b> ({prem_str})")
+        parts = []
+        if usd_inr:  parts.append(f"USD/INR: {usd_inr:.2f}{'⚠' if usd_inr > 84 else ''}")
+        if dow_chg is not None: parts.append(f"Dow: {dow_chg:+.1f}%")
+        if nq_chg is not None:  parts.append(f"Nasdaq: {nq_chg:+.1f}%")
+        if global_r: parts.append(f"Risk: {global_r}")
+        if parts: lines.append(" | ".join(parts))
+        if events:
+            ev_str = " | ".join(f"⚡{e['event']} ({e['days_away']}d)" for e in events[:2])
+            lines.append(f"Events: {ev_str}")
+        lines.append("━━━━━━━━━━━━━━━━━━━━━━━━")
+
     if verdict_type == "WAIT":
         re_trigger = v.get("wait_details", {}).get("re_entry_trigger", "—")
         re_window  = v.get("wait_details", {}).get("re_entry_window_minutes", 30)
@@ -135,26 +163,25 @@ def fmt_morning_briefing(verdict: dict, symbol: str = "NIFTY 50") -> str:
         ]
 
         if hedge_type not in ("NONE", "none", "", None) and hedge_strike:
-            hedge_emoji = "🛡️" if verdict_type == "BULL_TRADE" else "🛡️"
             lines.append(
-                f"{hedge_emoji} <b>Hedge:</b> {hedge_type.replace('_',' ')} "
+                f"🛡️ <b>Hedge:</b> {hedge_type.replace('_',' ')} "
                 f"@ {_fmt_price(hedge_strike)} (₹{hedge_premium:,.0f} premium)"
             )
 
-    # Layer intel
-    lines += [
-        f"",
-        f"📊 <b>{high_conf}/9 agents agree</b>",
-    ]
+    # Layer intel + OI change
+    l6_oi = l6.get("oi_change_pattern", "") if l6 else ""
+    lines += [f"", f"📊 <b>{high_conf}/9 agents agree</b>"]
 
     if l3:
         lines.append(f"└ L3 Tech: {l3.get('direction','—')} | EMA: {l3.get('ema_stack','—')}")
     if l6:
-        lines.append(f"└ L6 OPR: {l6.get('options_bias','—')} | {l6.get('best_execution_vehicle','—')}")
+        oi_str = f" | OI: {l6_oi}" if l6_oi else ""
+        lines.append(f"└ L6 OPR: {l6.get('options_bias','—')} | {l6.get('best_execution_vehicle','—')}{oi_str}")
     if mc:
         fii = mc.get("fii_net", 0)
         fii_str = f"+₹{fii:,.0f}Cr" if fii >= 0 else f"-₹{abs(fii):,.0f}Cr"
-        lines.append(f"└ Macro: {l1.get('risk_context', '—')} | FII: {fii_str}")
+        rbi     = mc.get("rbi_stance", "—")
+        lines.append(f"└ Macro: {l1.get('risk_context', '—')} | FII: {fii_str} | RBI: {rbi}")
 
     if rationale:
         lines += [f"", f"💬 {rationale}"]
