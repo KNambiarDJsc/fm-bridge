@@ -9,10 +9,10 @@ export function cn(...inputs: ClassValue[]) {
 export const VERDICT_COLORS: Record<VerdictType, {
     bg: string; border: string; text: string; glow: string; hex: string;
 }> = {
-    BULL_TRADE: { bg: "bg-bull/10", border: "border-bull", text: "text-bull", glow: "shadow-bull/20", hex: "#0db37a" },
-    BEAR_TRADE: { bg: "bg-bear/10", border: "border-bear", text: "text-bear", glow: "shadow-bear/20", hex: "#f04f4f" },
-    HEDGE_TRADE: { bg: "bg-hedge/10", border: "border-hedge", text: "text-hedge", glow: "shadow-hedge/20", hex: "#8b5cf6" },
-    WAIT: { bg: "bg-wait/10", border: "border-wait", text: "text-wait", glow: "shadow-wait/20", hex: "#e8a020" },
+    BULL_TRADE: { bg: "bg-bull/10", border: "border-bull", text: "text-bull", glow: "shadow-verdict-bull", hex: "#00c896" },
+    BEAR_TRADE: { bg: "bg-bear/10", border: "border-bear", text: "text-bear", glow: "shadow-verdict-bear", hex: "#ff4d5a" },
+    HEDGE_TRADE: { bg: "bg-hedge/10", border: "border-hedge", text: "text-hedge", glow: "shadow-verdict-hedge", hex: "#9d7dff" },
+    WAIT: { bg: "bg-wait/10", border: "border-wait", text: "text-wait", glow: "shadow-verdict-wait", hex: "#f5a623" },
 };
 
 export const VERDICT_LABELS: Record<VerdictType, string> = {
