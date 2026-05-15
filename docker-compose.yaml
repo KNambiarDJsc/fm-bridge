@@ -1,0 +1,129 @@
+###############################################################################
+# FM Trading Agency v5.0 — docker-compose.yml
+#
+# Starts all 6 services in the right order:
+#   fm-bridge (:8002) → fm-agents (:8003) → fm-journal (:8004)
+#   → fm-alerts (:8005) → fm-web (:3000)
+#   (fm-quant is embedded inside fm-agents, not a separate service)
+#
+# Usage:
+#   cp fm-bridge/.env.example fm-bridge/.env     # fill in Zerodha creds
+#   cp fm-agents/.env.example fm-agents/.env     # fill in Google API key
+#   cp fm-alerts/.env.example fm-alerts/.env     # fill in Telegram token
+#   cp fm-web/.env.local.example fm-web/.env.local
+#   docker-compose up
+#
+# Development (no Docker — just Python):
+#   ./install.sh && ./run.sh
+###############################################################################
+
+version: "3.9"
+
+services:
+
+  # ── fm-bridge: Zerodha bridge, NSE data, WebSocket ticks ───────
+  fm-bridge:
+    build:
+      context: ./fm-bridge
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    env_file: ./fm-bridge/.env
+    volumes:
+      - bridge-data:/root
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # ── fm-agents: LangGraph pipeline, 9-layer AI analysis ─────────
+  fm-agents:
+    build:
+      context: .
+      dockerfile: ./fm-agents/Dockerfile
+    ports:
+      - "8003:8003"
+    env_file:
+      - ./fm-agents/.env
+    environment:
+      - BRIDGE_URL=http://fm-bridge:8002
+    depends_on:
+      fm-bridge:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ── fm-journal: trade journal, analytics, backtest ──────────────
+  fm-journal:
+    build:
+      context: ./fm-journal
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    env_file: ./fm-journal/.env
+    volumes:
+      - journal-data:/app/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8004/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ── fm-alerts: Telegram briefings, price alerts ─────────────────
+  fm-alerts:
+    build:
+      context: ./fm-alerts
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    env_file: ./fm-alerts/.env
+    environment:
+      - BRIDGE_URL=http://fm-bridge:8002
+      - AGENTS_URL=http://fm-agents:8003
+      - JOURNAL_URL=http://fm-journal:8004
+    depends_on:
+      fm-bridge:
+        condition: service_healthy
+      fm-agents:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8005/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # ── fm-web: Next.js dashboard ───────────────────────────────────
+  fm-web:
+    build:
+      context: ./fm-web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - BRIDGE_URL=http://fm-bridge:8002
+      - AGENTS_URL=http://fm-agents:8003
+      - JOURNAL_URL=http://fm-journal:8004
+      - ALERTS_URL=http://fm-alerts:8005
+      - NODE_ENV=production
+    depends_on:
+      fm-bridge:
+        condition: service_healthy
+      fm-agents:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  bridge-data: # persists Zerodha token, capital shield state
+  journal-data: # persists SQLite trade journal
