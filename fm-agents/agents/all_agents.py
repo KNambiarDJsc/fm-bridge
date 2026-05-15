@@ -23,7 +23,7 @@ from schemas.agent_outputs import (
     L7StrategyResult, L8RiskResult, L9SovereignResult,
     LegendConsensus, WaitDetails, StrategyPlan, BearPivotEntry,
 )
-from agents.base import call_agent, fmt_ind, fmt_oc, fmt_macro
+from agents.base import call_agent, fmt_ind, fmt_oc, fmt_macro, fmt_oi_change
 
 import logging
 log = logging.getLogger("fm.agents")
@@ -47,23 +47,35 @@ def run_l1_macro(state: AgentState, llm) -> dict:
         "ZERO-PLACEHOLDER: confidence must be 1-100, never 0."
     )
 
+    # Gift Nifty premium tells us pre-market direction
+    gift     = mc.get("gift_nifty")
+    gift_prem= mc.get("gift_premium")
+    global_r = mc.get("global_risk", "")
+    events   = mc.get("events_next_7_days", [])
+    ev_str   = ", ".join(f"{e['event']} in {e['days_away']}d" for e in events[:2]) if events else "None"
+
     user = (
         f"INDEX: {sym}\n"
-        f"MACRO DATA: {fmt_macro(mc)}\n"
-        f"SESSION: {sess.get('session', '?')} | "
+        f"━━━ MACRO DATA ━━━\n{fmt_macro(mc)}\n"
+        f"━━━ SESSION ━━━\n"
+        f"Session: {sess.get('session', '?')} | "
         f"Expiry: {sess.get('is_expiry_day', False)} | "
-        f"DTE: {sess.get('days_to_expiry', '?')}\n\n"
+        f"DTE: {sess.get('days_to_expiry', '?')}\n"
+        f"{'━━━ GIFT NIFTY ━━━\n' if gift else ''}"
+        f"{f'GIFT Nifty: {gift:.0f} (premium: {'+' if (gift_prem or 0)>=0 else ''}{gift_prem:.0f}pts) → ' if gift else ''}"
+        f"{'Bullish gap-up expected' if (gift_prem or 0) > 50 else ('Bearish gap-down expected' if (gift_prem or 0) < -50 else 'Flat open') if gift else ''}\n"
+        f"Global Risk: {global_r} | Upcoming: {ev_str}\n\n"
         f"Assess the macro environment. If oil > $100, LONG is blocked — set "
-        f"short_search_triggered=true and oil_shock_active=true.\n\n"
+        f"short_search_triggered=true and oil_shock_active=true.\n"
+        f"If GIFT Nifty shows strong negative premium (< -100pts), flag gap_risk=HIGH.\n\n"
         f'Return JSON: {{"agent":"l1_macro_sieve","status":"ALLOW|BLOCK|WATCH",'
         f'"risk_context":"RISK_ON|RISK_OFF|TRANSITION",'
         f'"oil_shock_active":false,"oil_shock_veto_applies":"LONG_ONLY|NONE",'
         f'"post_expiry_phase":false,"domestic_floor_active":false,'
         f'"short_search_triggered":false,"liquidity_state":"NORMAL|TIGHT|AMPLE",'
         f'"gap_risk":"LOW|MODERATE|HIGH","macro_score":0,"confidence":0,'
-        f'"rationale":"2-3 sentences"}}'
+        f'"rationale":"2-3 sentences"}}' 
     )
-
     result = call_agent(llm, system, user, L1MacroResult, "L1")
     return {"l1_result": result}
 
@@ -213,13 +225,21 @@ def run_l5_sentiment(state: AgentState, llm) -> dict:
     sym       = state.get("symbol", "NIFTY 50")
 
     system = (
-        "You are L5 Sentiment — assessing market mood from news and flow data. "
+        "You are L5 Sentiment — assessing market mood from news, flow data, and events. "
         "ANTI-HALLUCINATION LAW: Only use the actual headlines provided below. "
         "Do NOT invent headlines. If no headlines, say so. "
         "ZERO-PLACEHOLDER: fear_greed_proxy and confidence must be 1-100."
     )
 
     headlines_str = "\n".join([f"  • {h}" for h in headlines[:8]]) if headlines else "  (No headlines available)"
+
+    # RBI and event calendar context
+    rbi_hl      = mc.get("rbi_latest_headline", "")
+    events      = mc.get("events_next_7_days", [])
+    is_rbi_week = mc.get("is_rbi_week", False)
+    is_fomc_week= mc.get("is_fomc_week", False)
+    is_results  = mc.get("is_result_season", False)
+    ev_str = ", ".join(f"{e['event']} ({e['days_away']}d away)" for e in events[:3]) if events else "No major events"
 
     user = (
         f"INDEX: {sym}\n"
@@ -228,7 +248,13 @@ def run_l5_sentiment(state: AgentState, llm) -> dict:
         f"DomFloor={mc.get('domestic_floor_active',False)}\n"
         f"EVENT CONTEXT: severity={event_ctx.get('event_severity','?')} | "
         f"events={event_ctx.get('detected_events',[])} | "
-        f"narrative={event_ctx.get('narrative','')}\n\n"
+        f"narrative={event_ctx.get('narrative','')}\n"
+        f"━━━ CALENDAR EVENTS ━━━\n"
+        f"Upcoming: {ev_str}\n"
+        f"{'⚠️ RBI WEEK — expect reduced risk appetite' if is_rbi_week else ''}"
+        f"{'⚠️ FOMC WEEK — watch USD/INR and FII flows' if is_fomc_week else ''}"
+        f"{'📊 RESULT SEASON — individual stock moves may diverge from index' if is_results else ''}\n"
+        f"{f'RBI Latest: {rbi_hl}' if rbi_hl else ''}\n\n"
         f"Assess market sentiment direction. "
         f"Legend consensus: estimate BULL/NEUTRAL/BEAR split based on technical picture.\n\n"
         f'Return JSON: {{"agent":"l5_sentiment","status":"ALLOW|WATCH",'
@@ -238,16 +264,12 @@ def run_l5_sentiment(state: AgentState, llm) -> dict:
         f'"domestic_floor_signal":{str(mc.get("domestic_floor_active",False)).lower()},'
         f'"top_headlines":{str(headlines[:3])},'
         f'"legend_consensus":{{"bull":0,"neutral":0,"bear":0,"total":20,"summary":"string"}},'
-        f'"confidence":0,"rationale":"2-3 sentences"}}'
+        f'"confidence":0,"rationale":"2-3 sentences"}}' 
     )
 
     result = call_agent(llm, system, user, L5SentimentResult, "L5")
     return {"l5_result": result}
 
-
-# ════════════════════════════════════════════════════════════════
-# L6 — OPTIONS FLOW INTELLIGENCE
-# ════════════════════════════════════════════════════════════════
 
 def run_l6_options(state: AgentState, llm) -> dict:
     oc     = state.get("options_chain",  {})
@@ -257,41 +279,57 @@ def run_l6_options(state: AgentState, llm) -> dict:
 
     system = (
         "You are L6 Options Flow Intelligence — interpreting derivatives market signals. "
-        "CRITICAL: OPR, PCR, Max Pain, GEX are PRE-COMPUTED. You READ and INTERPRET them. "
+        "CRITICAL: OPR, PCR, Max Pain, GEX, OI Change are PRE-COMPUTED. You READ and INTERPRET them. "
         "You do NOT calculate these numbers yourself. "
+        "OI CHANGE LAW: Long buildup = new bulls, high conviction. Short covering = weak rally. "
         "ZERO-PLACEHOLDER: all scores must be 1-100."
     )
+
+    # Get IV rank from stored history
+    atm_iv = oc.get("atm_iv")
+    iv_rank_live = iv_pct_live = None
+    iv_regime_live = ci.get("iv_regime", "FAIR")
+    try:
+        from services.options_chain import get_iv_rank
+        iv_rank_live, iv_pct_live, iv_regime_live = get_iv_rank(sym, atm_iv)
+    except Exception:
+        pass
 
     user = (
         f"INDEX: {sym} | SPOT: {spot}\n"
         f"OPTIONS CHAIN: {fmt_oc(oc)}\n"
+        f"━━━ OI CHANGE ANALYSIS ━━━\n{fmt_oi_change(ci)}\n"
+        f"━━━ DEALER INTELLIGENCE ━━━\n"
         f"GEX: {ci.get('net_gex','?')} | Dealer Stance: {ci.get('dealer_stance','?')}\n"
-        f"Gamma Flip: {ci.get('gamma_flip_level','?')} | IV Regime: {ci.get('iv_regime','?')}\n"
-        f"IV%ile: {ci.get('iv_percentile','?')} | Options Bias: {ci.get('options_bias','?')}\n"
+        f"Gamma Flip: {ci.get('gamma_flip_level','?')} | "
+        f"IV Regime: {iv_regime_live} | "
+        f"IV Rank: {iv_rank_live if iv_rank_live is not None else '?'} | "
+        f"IV%ile: {iv_pct_live if iv_pct_live is not None else ci.get('iv_percentile','?')}\n"
         f"Call Wall: {ci.get('call_oi_wall','?')} | Put Wall: {ci.get('put_oi_wall','?')}\n"
         f"Max Pain Pull: {ci.get('max_pain_pull_pts','?')}pts | "
         f"Expiry Pin Risk: {ci.get('expiry_pin_risk','?')}\n\n"
+        f"KEY: If IV is CHEAP (< 30th pct), buy options outright. "
+        f"If IV is EXPENSIVE (> 70th pct), sell spreads or use iron condor.\n"
+        f"KEY: If OI shows LONG_BUILDUP, strong directional conviction. "
+        f"If SHORT_COVERING, don't chase — rally may be temporary.\n\n"
         f"Interpret the options market intelligence. "
         f"What is the institutional positioning? What vehicle is best?\n\n"
         f'Return JSON: {{"agent":"l6_options_flow","status":"ALLOW|WATCH|BLOCK",'
         f'"options_bias":"BULLISH|BEARISH|NEUTRAL",'
         f'"opr_interpretation":"string","pcr_signal":"string","max_pain_pull":"string",'
+        f'"oi_change_pattern":"{(ci.get('oi_change') or {{}}).get('pattern','NEUTRAL')}",'
         f'"call_wall_level":{oc.get("call_wall") or "null"},'
         f'"put_wall_level":{oc.get("put_wall") or "null"},'
         f'"gamma_flip_level":{ci.get("gamma_flip_level") or "null"},'
         f'"dealer_stance":"{ci.get("dealer_stance","NEUTRAL")}",'
-        f'"iv_regime":"{ci.get("iv_regime","FAIR")}",'
+        f'"iv_regime":"{iv_regime_live}",'
         f'"best_execution_vehicle":"Futures|ATM CE|ATM PE|Iron Condor|Bull Call Spread|Bear Put Spread",'
-        f'"flow_conviction_score":0,"confidence":0,"rationale":"2-3 sentences"}}'
+        f'"flow_conviction_score":0,"confidence":0,"rationale":"2-3 sentences"}}' 
     )
 
     result = call_agent(llm, system, user, L6OptionsResult, "L6")
     return {"l6_result": result}
 
-
-# ════════════════════════════════════════════════════════════════
-# L7 — STRATEGY (TRIPLE OUTPUT — uses DEEP model)
-# ════════════════════════════════════════════════════════════════
 
 def run_l7_strategy(state: AgentState, llm_deep) -> dict:
     ind    = state.get("indicator_pack", {})

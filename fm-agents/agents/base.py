@@ -150,16 +150,58 @@ def fmt_oc(oc: dict) -> str:
 
 
 def fmt_macro(mc: dict) -> str:
-    """Format MacroContext dict into compact string."""
+    """Format MacroContext dict into compact string for agent prompts."""
     if not mc:
         return "No macro data available."
+
+    # Core domestic macro
+    lines = [
+        f"Brent: ${mc.get('brent_oil','?')} | OilShock: {mc.get('oil_shock_active',False)} | "
+        f"FII: ₹{mc.get('fii_net','?')}Cr | DII: ₹{mc.get('dii_net','?')}Cr | "
+        f"VIX: {mc.get('india_vix','?')} ({mc.get('vix_regime','?')}) | "
+        f"RBI: {mc.get('rbi_stance','?')} | Risk: {mc.get('risk_context','?')}",
+    ]
+
+    # NEW: Global cues (if available)
+    usd_inr  = mc.get("inr_usd") or mc.get("usd_inr")
+    gift     = mc.get("gift_nifty")
+    gift_prem= mc.get("gift_premium")
+    dow_chg  = mc.get("dow_change_pct")
+    nq_chg   = mc.get("nasdaq_change_pct")
+    global_r = mc.get("global_risk", "")
+
+    if usd_inr or gift or dow_chg is not None:
+        parts = []
+        if usd_inr:    parts.append(f"USD/INR: {usd_inr:.2f}{'⚠' if usd_inr > 84 else ''}")
+        if gift:       parts.append(f"GIFT Nifty: {gift:.0f} ({'+' if (gift_prem or 0)>=0 else ''}{gift_prem:.0f}pts)")
+        if dow_chg is not None: parts.append(f"Dow: {dow_chg:+.1f}%")
+        if nq_chg is not None:  parts.append(f"Nasdaq: {nq_chg:+.1f}%")
+        if global_r:   parts.append(f"GlobalRisk: {global_r}")
+        lines.append("GLOBAL: " + " | ".join(parts))
+
+    # RBI latest news
+    rbi_hl = mc.get("rbi_latest_headline")
+    if rbi_hl:
+        lines.append(f"RBI Latest: {rbi_hl[:80]}")
+
+    # Upcoming events
+    events = mc.get("events_next_7_days", [])
+    if events:
+        ev_str = " | ".join(f"{e['event']} ({e['days_away']}d)" for e in events[:3])
+        lines.append(f"EVENTS: {ev_str}")
+
+    return "\n".join(lines)
+
+
+def fmt_oi_change(ci: dict) -> str:
+    """Format OI change analysis for agent prompts."""
+    if not ci:
+        return "No OI change data."
+    oi_chg = ci.get("oi_change", {})
+    if not oi_chg:
+        return "OI change: not available."
     return (
-        f"Brent Oil: ${mc.get('brent_oil', '?')} | "
-        f"OilShock: {mc.get('oil_shock_active', False)} | "
-        f"FII: ₹{mc.get('fii_net', '?')}Cr | "
-        f"DII: ₹{mc.get('dii_net', '?')}Cr | "
-        f"DomFloor: {mc.get('domestic_floor_active', False)} | "
-        f"VIX: {mc.get('india_vix', '?')} ({mc.get('vix_regime', '?')}) | "
-        f"RiskCtx: {mc.get('risk_context', '?')} | "
-        f"RBI: {mc.get('rbi_stance', '?')}"
+        f"OI Pattern: {oi_chg.get('pattern','?')} ({oi_chg.get('dominant_side','?')}) | "
+        f"CE Added: {oi_chg.get('ce_oi_added',0):,} | PE Added: {oi_chg.get('pe_oi_added',0):,} | "
+        f"{oi_chg.get('narrative','')}"
     )
