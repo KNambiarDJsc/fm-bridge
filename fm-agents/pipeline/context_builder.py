@@ -69,7 +69,6 @@ def build_context(
         "risk_decision":   {},
         "cascade_input":   {},
         "cascade_result":  {},
-        "event_context":   {},
     }
 
     # ── 1. Live price ─────────────────────────────────────────────
@@ -136,42 +135,6 @@ def build_context(
         _run_quant(state)
     except Exception as e:
         log.warning("Quant engine failed (non-fatal): %s", e)
-
-    # ── 10. Event intelligence (v2) ──────────────────────────────
-    # Runs AFTER quant engine (step 9) so OI change pattern is available.
-    # Passes ALL quantitative signals — stress is quant-driven, not keyword-driven.
-    # Problem 1 fix: this block was dead code in v1. Now properly wired.
-    # Problem 2 fix: NSE-specific keyword routing (bank stocks -> BankNifty only).
-    # Problem 3 fix: FII/VIX/oil/Dow scale the stress deltas numerically.
-    try:
-        from event.intelligence import analyse_events
-        mc_data = state.get("macro_context", {}) or {}
-        ci_data = state.get("chain_intel",   {}) or {}
-        quant_signals = {
-            "fii_net":           mc_data.get("fii_net"),
-            "india_vix":         mc_data.get("india_vix"),
-            "brent_oil":         mc_data.get("brent_oil"),
-            "dow_change_pct":    mc_data.get("dow_change_pct"),
-            "nasdaq_change_pct": mc_data.get("nasdaq_change_pct"),
-            "usd_inr":           mc_data.get("inr_usd") or mc_data.get("usd_inr"),
-            "rbi_stance":        mc_data.get("rbi_stance"),
-            "global_risk":       mc_data.get("global_risk"),
-            "oi_change_pattern": (ci_data.get("oi_change") or {}).get("pattern"),
-        }
-        event_ctx = analyse_events(
-            headlines = state.get("news_headlines", []),
-            quant     = quant_signals,
-            llm       = None,   # LLM narrative generated inside L5 agent node
-        )
-        state["event_context"] = event_ctx.to_dict()
-        log.info(
-            "EventIntel v2: severity=%s market=%.0f banking=%.0f events=%s drivers=%d",
-            event_ctx.event_severity, event_ctx.market_stress, event_ctx.banking_risk,
-            event_ctx.detected_events[:3], len(event_ctx.quant_drivers),
-        )
-    except Exception as e:
-        log.warning("Event intelligence failed (non-fatal): %s", e)
-        state["event_context"] = {}
 
     t1 = time.time()
     log.info(
