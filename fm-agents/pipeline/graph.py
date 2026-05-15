@@ -259,4 +259,43 @@ def build_pipeline(llm_quick, llm_deep) -> Any:
 
     compiled = graph.compile()
     log.info("Pipeline compiled: START→[L1-L6 parallel]→L7→L8→L9→verdict")
+
+    # Wrap invoke() with LangSmith trace so the entire pipeline run
+    # (all 9 agents) appears as a single trace tree in LangSmith.
+    # Per SDK docs: use langsmith.trace() context manager for root runs.
+    import os
+    if os.getenv("LANGSMITH_API_KEY") and os.getenv("LANGSMITH_TRACING_V2") == "true":
+        try:
+            from langsmith import trace as ls_trace
+
+            _original_invoke = compiled.invoke
+
+            def traced_invoke(state: dict, *args, **kwargs) -> dict:
+                symbol = state.get("symbol", "NIFTY 50")
+                with ls_trace(
+                    name      = f"FM Pipeline — {symbol}",
+                    run_type  = "chain",
+                    inputs    = {"symbol": symbol},
+                    tags      = ["fm-trading-agency", "pipeline"],
+                    metadata  = {
+                        "symbol":  symbol,
+                        "regime":  state.get("regime_result", {}).get("regime", "?"),
+                        "session": (state.get("session_ctx") or {}).get("session", "?"),
+                    },
+                    project_name = os.getenv("LANGSMITH_PROJECT", "fm-trading-agency"),
+                ) as root_run:
+                    result = _original_invoke(state, *args, **kwargs)
+                    verdict = result.get("final_verdict", {})
+                    root_run.outputs = {
+                        "verdict":        verdict.get("verdict", "?"),
+                        "execution_score":verdict.get("execution_score", 0),
+                        "regime":         verdict.get("market_regime", "?"),
+                    }
+                    return result
+
+            compiled.invoke = traced_invoke
+            log.info("LangSmith pipeline tracing ENABLED")
+        except ImportError:
+            pass  # langsmith not installed — skip silently
+
     return compiled
