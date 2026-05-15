@@ -60,7 +60,7 @@ export function VerdictBanner({ verdict, isAnalyzing, elapsedSec = 0 }: Props) {
             <div
                 className="w-full relative overflow-hidden rounded-2xl px-6 py-5"
                 style={{
-                    background: "linear-gradient(135deg, rgba(96,165,250,0.08) 0%, #0d1117 60%)",
+                    background: "linear-gradient(135deg, rgba(96,165,250,0.08) 0%, var(--bg2) 60%)",
                     border: "1px solid rgba(96,165,250,0.2)",
                 }}
             >
@@ -75,13 +75,13 @@ export function VerdictBanner({ verdict, isAnalyzing, elapsedSec = 0 }: Props) {
                     <div className="relative w-14 h-14 shrink-0">
                         <svg className="w-14 h-14 animate-spin-slow" viewBox="0 0 56 56">
                             <circle cx="28" cy="28" r="22" strokeWidth="2.5" fill="none" stroke="rgba(96,165,250,0.12)" />
-                            <circle cx="28" cy="28" r="22" strokeWidth="2.5" fill="none" stroke="#60a5fa"
+                            <circle cx="28" cy="28" r="22" strokeWidth="2.5" fill="none" stroke="var(--bl)"
                                 strokeDasharray="90 48" strokeLinecap="round"
-                                style={{ filter: "drop-shadow(0 0 4px #60a5fa60)" }}
+                                style={{ filter: "drop-shadow(0 0 4px var(--bl)60)" }}
                             />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="font-mono text-[13px] font-black text-[#60a5fa] tabular-nums">{elapsedSec}s</span>
+                            <span className="font-mono text-[13px] font-black text-[var(--bl)] tabular-nums">{elapsedSec}s</span>
                         </div>
                     </div>
                     <div className="flex-1">
@@ -100,7 +100,7 @@ export function VerdictBanner({ verdict, isAnalyzing, elapsedSec = 0 }: Props) {
                     </div>
                     <div className="hidden sm:flex items-center gap-[4px] h-10">
                         {[6, 12, 18, 8, 22, 10, 16, 20, 7, 14].map((h, i) => (
-                            <WaveBar key={i} h={h} i={i} color="#60a5fa" />
+                            <WaveBar key={i} h={h} i={i} color="var(--bl)" />
                         ))}
                     </div>
                 </div>
@@ -113,7 +113,7 @@ export function VerdictBanner({ verdict, isAnalyzing, elapsedSec = 0 }: Props) {
         return (
             <div
                 className="w-full rounded-2xl px-6 py-6"
-                style={{ background: "#0d1117", border: "1px solid #1e2d45" }}
+                style={{ background: "var(--bg2)", border: "1px solid var(--b)" }}
             >
                 <div className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.1em] mb-3">
                     FM Trading Agency v5.0 · Intelligence Ready
@@ -144,7 +144,7 @@ export function VerdictBanner({ verdict, isAnalyzing, elapsedSec = 0 }: Props) {
         <div
             className="w-full relative overflow-hidden rounded-2xl verdict-enter"
             style={{
-                background: `linear-gradient(135deg, ${hex}12 0%, #0d1117 55%)`,
+                background: `linear-gradient(135deg, ${hex}12 0%, var(--bg2) 55%)`,
                 border: `1px solid ${hex}35`,
                 boxShadow: `0 0 60px ${hex}18, 0 0 120px ${hex}08`,
             }}
@@ -167,9 +167,9 @@ export function VerdictBanner({ verdict, isAnalyzing, elapsedSec = 0 }: Props) {
                     {/* Eyebrow */}
                     <div className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.1em] mb-2 flex items-center gap-2 flex-wrap">
                         <span>{verdict.best_index}</span>
-                        <span className="text-[#1e2d45]">·</span>
+                        <span className="text-[var(--b)]">·</span>
                         <span style={{ color: `${hex}90` }}>{verdict.regime?.replace(/_/g, " ")}</span>
-                        <span className="text-[#1e2d45]">·</span>
+                        <span className="text-[var(--b)]">·</span>
                         <span>Score {verdict.execution_score}/100</span>
                     </div>
 
@@ -212,14 +212,14 @@ function TradeDetails({ verdict, hex }: { verdict: FinalVerdict; hex: string }) 
         return (
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
                 <Pill label="Entry" value={`${fmtPrice(tp.entry_low)} – ${fmtPrice(tp.entry_high)}`} />
-                <Pill label="SL" value={fmtPrice(tp.stop_loss)} color="#ff5561" />
-                <Pill label="T1" value={fmtPrice(tp.target1)} color="#12e89e" />
-                <Pill label="T2" value={fmtPrice(tp.target2)} color="#22d3ee" />
+                <Pill label="SL" value={fmtPrice(tp.stop_loss)} color="var(--bear)" />
+                <Pill label="T1" value={fmtPrice(tp.target1)} color="var(--bull)" />
+                <Pill label="T2" value={fmtPrice(tp.target2)} color="var(--cy)" />
                 <Pill label="R:R" value={`1:${tp.rr.toFixed(1)}`} />
                 {tp.instrument && (
                     <span
                         className="font-mono text-[11px] px-2.5 py-1 rounded-md"
-                        style={{ background: `${hex}10`, border: `1px solid ${hex}25`, color: "#9dafc8" }}
+                        style={{ background: `${hex}10`, border: `1px solid ${hex}25`, color: "var(--t2)" }}
                     >
                         {tp.instrument}
                     </span>
@@ -236,8 +236,8 @@ function TradeDetails({ verdict, hex }: { verdict: FinalVerdict; hex: string }) 
                     <>
                         <Pill label="Sell CE" value={fmtPrice(hp.sell_ce)} />
                         <Pill label="Sell PE" value={fmtPrice(hp.sell_pe)} />
-                        <Pill label="Credit" value={fmtPrice(hp.net_credit_per_lot)} color="#12e89e" />
-                        <Pill label="MaxLoss" value={fmtPrice(hp.max_loss_per_lot)} color="#ff5561" />
+                        <Pill label="Credit" value={fmtPrice(hp.net_credit_per_lot)} color="var(--bull)" />
+                        <Pill label="MaxLoss" value={fmtPrice(hp.max_loss_per_lot)} color="var(--bear)" />
                     </>
                 ) : (
                     <span className="font-mono text-[12px] text-t2">{hp.protection_range}</span>
@@ -251,7 +251,7 @@ function TradeDetails({ verdict, hex }: { verdict: FinalVerdict; hex: string }) 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
             <span className="font-mono text-[12px] text-t2">{ws.reason}</span>
             <Pill label="Re-entry" value={ws.re_entry_trigger} />
-            <Pill label="Window" value={`${ws.re_entry_window_minutes}m`} color="#fbbf24" />
+            <Pill label="Window" value={`${ws.re_entry_window_minutes}m`} color="var(--wait)" />
         </div>
     );
 }
@@ -260,7 +260,7 @@ function Pill({ label, value, color }: { label: string; value: string; color?: s
     return (
         <span className="flex items-center gap-1.5">
             <span className="font-mono text-[10px] font-bold text-t3 uppercase tracking-wide">{label}</span>
-            <span className="font-mono text-[13px] font-bold" style={{ color: color ?? "#f0f4ff" }}>
+            <span className="font-mono text-[13px] font-bold" style={{ color: color ?? "var(--t1)" }}>
                 {value}
             </span>
         </span>

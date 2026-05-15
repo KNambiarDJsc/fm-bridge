@@ -9,7 +9,7 @@ interface Props {
 
 function NarrCard({ label, score, children }: { label: string; score?: number; children: React.ReactNode }) {
     return (
-        <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+        <div className="bg-[var(--bg3)] border border-[var(--b)] rounded-lg p-3">
             <div className="flex items-center mb-3">
                 <span className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px]">{label}</span>
                 {score != null && (
@@ -51,11 +51,11 @@ export function SectionC({ macro, agentOutputs }: Props) {
 
             {/* C3 — Legend Consensus (most prominent per spec §6.1) */}
             {legend && legend.total > 0 && (
-                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                <div className="bg-[var(--bg3)] border border-[var(--b)] rounded-lg p-3">
                     <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">
                         C3 · 20-Legend Advisor Consensus
                     </div>
-                    <div className="flex h-9 rounded-lg overflow-hidden border border-[#1e2d45] mb-2">
+                    <div className="flex h-9 rounded-lg overflow-hidden border border-[var(--b)] mb-2">
                         {legend.bull > 0 && (
                             <div className="bg-bull flex items-center justify-center font-mono text-[11px] font-black text-bg"
                                 style={{ flex: legend.bull }}>

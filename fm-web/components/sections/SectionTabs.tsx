@@ -31,12 +31,12 @@ export function SectionTabs(props: SectionTabsProps) {
     return (
         <div
             className="overflow-hidden rounded-2xl"
-            style={{ background: "#0d1117", border: "1px solid #1e2d45" }}
+            style={{ background: "var(--bg2)", border: "1px solid var(--b)" }}
         >
             {/* Tab bar */}
             <div
                 className="flex border-b"
-                style={{ borderColor: "#1e2d45", background: "#0a0c13" }}
+                style={{ borderColor: "var(--b)", background: "var(--bg)" }}
             >
                 {TABS.map((tab) => {
                     const active = activeSection === tab.id;
@@ -61,27 +61,27 @@ export function SectionTabs(props: SectionTabsProps) {
                                 <div className="flex items-center gap-1.5 mb-0.5">
                                     <span
                                         className="font-mono text-[12px]"
-                                        style={{ color: active ? "var(--accent)" : "#556680" }}
+                                        style={{ color: active ? "var(--accent)" : "var(--t3)" }}
                                     >
                                         {tab.icon}
                                     </span>
                                     <span
                                         className="font-head font-bold hidden sm:block"
-                                        style={{ fontSize: "12px", color: active ? "#f0f4ff" : "#9dafc8" }}
+                                        style={{ fontSize: "12px", color: active ? "var(--t1)" : "var(--t2)" }}
                                     >
                                         {tab.label}
                                     </span>
                                     {/* Mobile: letter only */}
                                     <span
                                         className="font-mono text-[12px] font-black sm:hidden"
-                                        style={{ color: active ? "var(--accent)" : "#9dafc8" }}
+                                        style={{ color: active ? "var(--accent)" : "var(--t2)" }}
                                     >
                                         {tab.id}
                                     </span>
                                 </div>
                                 <span
                                     className="font-mono text-[10px] hidden lg:block leading-none"
-                                    style={{ color: active ? "rgba(240,244,255,0.4)" : "#556680" }}
+                                    style={{ color: active ? "rgba(240,244,255,0.4)" : "var(--t3)" }}
                                 >
                                     {tab.sub}
                                 </span>
@@ -97,7 +97,7 @@ export function SectionTabs(props: SectionTabsProps) {
                 return t ? (
                     <div
                         className="px-5 py-2 flex items-center gap-2 border-b"
-                        style={{ borderColor: "#1e2d45", background: "rgba(0,0,0,0.15)" }}
+                        style={{ borderColor: "var(--b)", background: "rgba(0,0,0,0.15)" }}
                     >
                         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--accent)", opacity: 0.75 }}>
                             {t.icon} {t.label}

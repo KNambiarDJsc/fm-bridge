@@ -12,7 +12,7 @@ interface Props {
 
 function SectionHead({ children }: { children: React.ReactNode }) {
     return (
-        <div className="font-mono text-[11px] font-bold text-t3 uppercase tracking-[1px] mb-2 pb-1.5 border-b border-[#1e2d45]">
+        <div className="font-mono text-[11px] font-bold text-t3 uppercase tracking-[1px] mb-2 pb-1.5 border-b border-[var(--b)]">
             {children}
         </div>
     );
@@ -43,7 +43,7 @@ export function SectionA({ verdict, indicators: ind, options: oc, macro }: Props
                             const s = verdict.layer_scores[l] ?? 0;
                             return (
                                 <div key={l} className={cn(
-                                    "bg-[#131924] border rounded-md p-2 text-center",
+                                    "bg-[var(--bg3)] border rounded-md p-2 text-center",
                                     s >= 70 ? "border-bull/30" : s < 40 ? "border-bear/30" : "border-b"
                                 )}>
                                     <div className="font-mono text-[11px] text-t3 font-bold">{l}</div>

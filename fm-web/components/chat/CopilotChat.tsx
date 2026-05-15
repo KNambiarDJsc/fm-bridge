@@ -50,7 +50,7 @@ export function CopilotChat({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        <div className="flex flex-col h-full" style={{ background: "#0a0c13", borderTop: "1px solid #1e2d45" }}>
+        <div className="flex flex-col h-full" style={{ background: "var(--bg)", borderTop: "1px solid var(--b)" }}>
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-b shrink-0">
                 <MessageCircle size={14} className="text-bl" />
@@ -70,14 +70,14 @@ export function CopilotChat({ onClose }: { onClose: () => void }) {
                             m.role === "user"
                                 ? "bg-bl/15 text-t1 border border-bl/20"
                                 : "text-t2 rounded-lg"
-                        )} style={m.role !== "user" ? { background: "#131924", border: "1px solid #1e2d45" } : undefined}>
+                        )} style={m.role !== "user" ? { background: "var(--bg3)", border: "1px solid var(--b)" } : undefined}>
                             {m.content}
                         </div>
           </div>
         ))}
             {isPending && (
                 <div className="flex justify-start">
-                    <div className="rounded-lg px-3 py-2 font-mono text-[11px] text-t3" style={{ background: "#131924", border: "1px solid #1e2d45" }}>
+                    <div className="rounded-lg px-3 py-2 font-mono text-[11px] text-t3" style={{ background: "var(--bg3)", border: "1px solid var(--b)" }}>
                         Thinking<span className="animate-pulse">…</span>
                     </div>
                 </div>
@@ -106,7 +106,7 @@ export function CopilotChat({ onClose }: { onClose: () => void }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), send(input))}
             placeholder="Ask about the analysis…"
-            className="flex-1 rounded-xl px-3 py-2.5 font-mono text-[13px] text-t1 placeholder:text-t3 outline-none transition-colors" style={{ background: "#131924", border: "1px solid #1e2d45" }}
+            className="flex-1 rounded-xl px-3 py-2.5 font-mono text-[13px] text-t1 placeholder:text-t3 outline-none transition-colors" style={{ background: "var(--bg3)", border: "1px solid var(--b)" }}
         />
         <button
             onClick={() => send(input)}

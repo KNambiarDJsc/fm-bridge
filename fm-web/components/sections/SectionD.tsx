@@ -17,7 +17,7 @@ export function SectionD({ verdict, shield }: Props) {
 
             {/* Trade Plan summary (if active trade) */}
             {tp && verdict?.verdict !== "WAIT" && (
-                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                <div className="bg-[var(--bg3)] border border-[var(--b)] rounded-lg p-3">
                     <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">
                         D0 · Active Trade Plan
                     </div>
@@ -33,13 +33,13 @@ export function SectionD({ verdict, shield }: Props) {
                         {tp.target3 && <PriceBlock label="Target 3" value={fmtPrice(tp.target3)} tone="text-bull" />}
                     </div>
                     {tp.entry_trigger && (
-                        <div className="p-2 rounded bg-bl/5 border border-[#1e2d45]l/20 mb-2">
+                        <div className="p-2 rounded bg-bl/5 border border-[var(--b)]l/20 mb-2">
                             <div className="font-mono text-[11px] text-bl font-bold uppercase mb-0.5">Entry Trigger</div>
                             <div className="font-mono text-[11px] text-t2">{tp.entry_trigger}</div>
                         </div>
                     )}
                     {tp.invalidation && (
-                        <div className="p-2 rounded bg-bear/5 border border-[#1e2d45]ear/20">
+                        <div className="p-2 rounded bg-bear/5 border border-[var(--b)]ear/20">
                             <div className="font-mono text-[11px] text-bear font-bold uppercase mb-0.5">Invalidation</div>
                             <div className="font-mono text-[11px] text-t2">{tp.invalidation}</div>
                         </div>
@@ -63,7 +63,7 @@ export function SectionD({ verdict, shield }: Props) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Hedge Structure */}
-                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                <div className="bg-[var(--bg3)] border border-[var(--b)] rounded-lg p-3">
                     <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">D1 · Hedge Structure</div>
                     {!hp || hp.hedge_type === "NONE" || !verdict || verdict.verdict === "WAIT" ? (
                         <div className="font-mono text-[11px] text-t3">
@@ -79,7 +79,7 @@ export function SectionD({ verdict, shield }: Props) {
                 </div>
 
                 {/* Capital shield */}
-                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                <div className="bg-[var(--bg3)] border border-[var(--b)] rounded-lg p-3">
                     <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">D2 · Capital Shield</div>
                     {!shield ? (
                         <div className="font-mono text-[11px] text-t3">Bridge not connected — capital shield unavailable.</div>
@@ -97,7 +97,7 @@ export function SectionD({ verdict, shield }: Props) {
 
 function PriceBlock({ label, value, tone }: { label: string; value: string; tone?: string }) {
     return (
-        <div className="bg-bg border border-[#1e2d45] rounded-md p-2">
+        <div className="bg-bg border border-[var(--b)] rounded-md p-2">
             <div className="font-mono text-[11px] text-t3 uppercase mb-1">{label}</div>
             <div className={cn("font-mono text-[13px] font-black", tone ?? "text-t1")}>{value}</div>
         </div>
@@ -106,7 +106,7 @@ function PriceBlock({ label, value, tone }: { label: string; value: string; tone
 
 function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
     return (
-        <div className="flex justify-between items-start gap-2 py-1 border-b border-[#1e2d45]/40">
+        <div className="flex justify-between items-start gap-2 py-1 border-b border-[var(--b)]/40">
             <span className="font-mono text-[11px] text-t3 shrink-0">{k}</span>
             <span className={cn("font-mono text-[11px] font-bold text-right", tone ?? "text-t1")}>{v}</span>
         </div>
@@ -172,13 +172,13 @@ function CapitalDash({ shield }: { shield: CapitalShield }) {
     return (
         <div className="space-y-2">
             {/* Kill switch */}
-            <div className="flex justify-between items-center py-1 border-b border-[#1e2d45]/40">
+            <div className="flex justify-between items-center py-1 border-b border-[var(--b)]/40">
                 <span className="font-mono text-[11px] text-t3">Kill Switch</span>
                 <span className={cn(
                     "font-mono text-[11px] font-black px-2 py-0.5 rounded",
                     shield.kill_switch
-                        ? "bg-bear/20 text-bear border border-[#1e2d45]ear/40 animate-pulse-slow"
-                        : "bg-bull/10 text-bull border border-[#1e2d45]ull/20"
+                        ? "bg-bear/20 text-bear border border-[var(--b)]ear/40 animate-pulse-slow"
+                        : "bg-bull/10 text-bull border border-[var(--b)]ull/20"
                 )}>
                     {shield.kill_switch ? "🔴 ACTIVE" : "OFF"}
                 </span>

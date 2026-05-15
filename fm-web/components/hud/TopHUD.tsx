@@ -12,22 +12,22 @@ interface Props {
 }
 
 const SESSION_META: Record<string, { label: string; color: string }> = {
-    PRE_OPEN: { label: "Pre-Open", color: "#556680" },
-    OPENING_VOLATILITY: { label: "Opening ⚡", color: "#fbbf24" },
-    MIDDAY_CHOP: { label: "Mid-Day", color: "#60a5fa" },
-    POWER_HOUR: { label: "Power Hour", color: "#12e89e" },
-    CLOSING: { label: "Closing", color: "#fbbf24" },
-    POST_CLOSE: { label: "Post-Close", color: "#556680" },
-    EXPIRY_MORNING: { label: "EXPIRY ⚠", color: "#ff5561" },
+    PRE_OPEN: { label: "Pre-Open", color: "var(--t3)" },
+    OPENING_VOLATILITY: { label: "Opening ⚡", color: "var(--wait)" },
+    MIDDAY_CHOP: { label: "Mid-Day", color: "var(--bl)" },
+    POWER_HOUR: { label: "Power Hour", color: "var(--bull)" },
+    CLOSING: { label: "Closing", color: "var(--wait)" },
+    POST_CLOSE: { label: "Post-Close", color: "var(--t3)" },
+    EXPIRY_MORNING: { label: "EXPIRY ⚠", color: "var(--bear)" },
 };
 
 const REGIME_COLOR: Record<string, string> = {
-    BULL_TREND: "#12e89e",
-    BEAR_TREND: "#ff5561",
-    VOLATILE: "#fbbf24",
-    RANGE: "#60a5fa",
-    EVENT_DRIVEN: "#a78bfa",
-    TRAP: "#ff5561",
+    BULL_TREND: "var(--bull)",
+    BEAR_TREND: "var(--bear)",
+    VOLATILE: "var(--wait)",
+    RANGE: "var(--bl)",
+    EVENT_DRIVEN: "var(--hedge)",
+    TRAP: "var(--bear)",
 };
 
 function LiveClock({ istTime }: { istTime?: string }) {
@@ -48,25 +48,25 @@ function LiveClock({ istTime }: { istTime?: string }) {
 }
 
 export function TopHUD({ verdict, session, shield, symbol }: Props) {
-    const sess = SESSION_META[session?.session ?? ""] ?? { label: "—", color: "#556680" };
+    const sess = SESSION_META[session?.session ?? ""] ?? { label: "—", color: "var(--t3)" };
     const regime = verdict?.regime ?? "";
-    const regimeColor = REGIME_COLOR[regime] ?? "#556680";
+    const regimeColor = REGIME_COLOR[regime] ?? "var(--t3)";
     const score = verdict?.execution_score ?? 0;
     const ddUsed = shield && shield.daily_dd_limit > 0
         ? (shield.daily_dd_pct / shield.daily_dd_limit) * 100
         : 0;
     const verdictColor =
-        verdict?.verdict === "BULL_TRADE" ? "#12e89e" :
-            verdict?.verdict === "BEAR_TRADE" ? "#ff5561" :
-                verdict?.verdict === "HEDGE_TRADE" ? "#a78bfa" :
-                    verdict?.verdict === "WAIT" ? "#fbbf24" : "#556680";
+        verdict?.verdict === "BULL_TRADE" ? "var(--bull)" :
+            verdict?.verdict === "BEAR_TRADE" ? "var(--bear)" :
+                verdict?.verdict === "HEDGE_TRADE" ? "var(--hedge)" :
+                    verdict?.verdict === "WAIT" ? "var(--wait)" : "var(--t3)";
 
     return (
         <div
             className="w-full h-[48px] flex items-stretch shrink-0 overflow-x-auto"
             style={{
-                background: "#0d1117",
-                borderBottom: "1px solid #1e2d45",
+                background: "var(--bg2)",
+                borderBottom: "1px solid var(--b)",
             }}
         >
             {/* Regime accent line across the very top */}
@@ -79,7 +79,7 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
             />
 
             {/* LOGO */}
-            <div className="px-4 flex items-center gap-2 border-r border-[#1e2d45] shrink-0">
+            <div className="px-4 flex items-center gap-2 border-r border-[var(--b)] shrink-0">
                 <div
                     className="w-2 h-2 rounded-full live-dot"
                     style={{ backgroundColor: regimeColor, boxShadow: `0 0 6px ${regimeColor}` }}
@@ -94,7 +94,7 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
             <Cell
                 label="INDEX"
                 value={symbol.replace("NIFTY ", "N·")}
-                valueColor="#f0f4ff"
+                valueColor="var(--t1)"
             />
 
             {/* SESSION */}
@@ -108,13 +108,13 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
             />
 
             {/* SCORE */}
-            <div className="px-4 flex flex-col justify-center border-r border-[#1e2d45] shrink-0 min-w-[88px]">
+            <div className="px-4 flex flex-col justify-center border-r border-[var(--b)] shrink-0 min-w-[88px]">
                 <div className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.08em] mb-[3px]">SCORE</div>
                 <div className="flex items-baseline gap-1">
                     <span
                         className="font-mono text-[15px] font-black tabular-nums"
                         style={{
-                            color: score >= 80 ? "#12e89e" : score >= 65 ? "#60a5fa" : score > 0 ? "#9dafc8" : "#556680",
+                            color: score >= 80 ? "var(--bull)" : score >= 65 ? "var(--bl)" : score > 0 ? "var(--t2)" : "var(--t3)",
                         }}
                     >
                         {score > 0 ? score : "—"}
@@ -124,12 +124,12 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
                     )}
                 </div>
                 {score > 0 && (
-                    <div className="mt-1 h-[2px] bg-[#1e2d45] rounded-full overflow-hidden" style={{ width: "52px" }}>
+                    <div className="mt-1 h-[2px] bg-[var(--b)] rounded-full overflow-hidden" style={{ width: "52px" }}>
                         <div
                             className="h-full rounded-full transition-all duration-700"
                             style={{
                                 width: `${score}%`,
-                                backgroundColor: score >= 80 ? "#12e89e" : score >= 65 ? "#60a5fa" : "#fbbf24",
+                                backgroundColor: score >= 80 ? "var(--bull)" : score >= 65 ? "var(--bl)" : "var(--wait)",
                             }}
                         />
                     </div>
@@ -150,8 +150,8 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
                 label="RISK"
                 value={shield?.risk_state ?? "—"}
                 valueColor={
-                    shield?.risk_state === "LOW" ? "#12e89e" :
-                        shield?.risk_state === "MODERATE" ? "#fbbf24" : "#ff5561"
+                    shield?.risk_state === "LOW" ? "var(--bull)" :
+                        shield?.risk_state === "MODERATE" ? "var(--wait)" : "var(--bear)"
                 }
             />
 
@@ -160,10 +160,10 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
             {/* KILL SWITCH */}
             {shield?.kill_switch && (
                 <div
-                    className="flex items-center px-4 shrink-0 border-l border-[#ff5561]/30 animate-pulse-slow"
+                    className="flex items-center px-4 shrink-0 border-l border-[var(--bear)]/30 animate-pulse-slow"
                     style={{ background: "rgba(255,85,97,0.1)" }}
                 >
-                    <span className="font-mono text-[11px] font-black text-[#ff5561] tracking-wide">
+                    <span className="font-mono text-[11px] font-black text-[var(--bear)] tracking-wide">
                         ⬛ KILL SWITCH
                     </span>
                 </div>
@@ -171,20 +171,20 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
 
             {/* DD */}
             {shield && !shield.kill_switch && (
-                <div className="flex items-center gap-2.5 px-4 border-l border-[#1e2d45] shrink-0">
+                <div className="flex items-center gap-2.5 px-4 border-l border-[var(--b)] shrink-0">
                     <span className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.08em]">DD</span>
-                    <div className="w-[52px] h-[3px] bg-[#1e2d45] rounded-full overflow-hidden">
+                    <div className="w-[52px] h-[3px] bg-[var(--b)] rounded-full overflow-hidden">
                         <div
                             className="h-full rounded-full transition-all"
                             style={{
                                 width: `${Math.min(100, ddUsed)}%`,
-                                backgroundColor: ddUsed > 70 ? "#ff5561" : ddUsed > 40 ? "#fbbf24" : "#12e89e",
+                                backgroundColor: ddUsed > 70 ? "var(--bear)" : ddUsed > 40 ? "var(--wait)" : "var(--bull)",
                             }}
                         />
                     </div>
                     <span
                         className="font-mono text-[11px] font-bold tabular-nums"
-                        style={{ color: ddUsed > 70 ? "#ff5561" : "#9dafc8" }}
+                        style={{ color: ddUsed > 70 ? "var(--bear)" : "var(--t2)" }}
                     >
                         {shield.daily_dd_pct.toFixed(2)}%
                     </span>
@@ -192,7 +192,7 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
             )}
 
             {/* CLOCK */}
-            <div className="flex items-center px-4 border-l border-[#1e2d45] shrink-0">
+            <div className="flex items-center px-4 border-l border-[var(--b)] shrink-0">
                 <span className="font-mono text-[11px] text-t2 tabular-nums">
                     <LiveClock istTime={session?.ist_time} />
                 </span>
@@ -205,7 +205,7 @@ function Cell({ label, value, valueColor }: {
     label: string; value: string; valueColor: string;
 }) {
     return (
-        <div className="px-4 flex flex-col justify-center border-r border-[#1e2d45] shrink-0 min-w-[80px]">
+        <div className="px-4 flex flex-col justify-center border-r border-[var(--b)] shrink-0 min-w-[80px]">
             <div className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.08em] mb-[3px] leading-none">
                 {label}
             </div>
