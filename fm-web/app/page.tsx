@@ -249,7 +249,7 @@ export default function Dashboard() {
                                 onClick={() => setShowChart(v => !v)}
                                 className={cn(
                                     "flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border transition-all",
-                                    showChart ? "" : ""
+                                    showChart ? "bg-bl/10 border-bl/30 text-bl" : "bg-bg3 border-b text-t3 hover:text-t1"
                                 )}
                             >
                                 <BarChart2 size={12} />
@@ -269,7 +269,7 @@ export default function Dashboard() {
                                 onClick={toggleChat}
                                 className={cn(
                                     "flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border transition-all",
-                                    chatOpen ? "" : ""
+                                    chatOpen ? "bg-bl/10 border-bl/30 text-bl" : "bg-bg3 border-b text-t3 hover:text-t1"
                                 )}
                             >
                                 <MessageCircle size={12} />
