@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { TopHUD } from "@/components/hud/TopHUD";
 import { VerdictBanner } from "@/components/verdict/VerdictBanner";
 import { IndexHeatmap } from "@/components/heatmap/IndexHeatmap";
@@ -14,7 +15,7 @@ import {
     useIndicators, useOptionsChain, useBridgeHealth,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { Play, MessageCircle, AlertCircle, BarChart2, X } from "lucide-react";
+import { Play, MessageCircle, AlertCircle, BarChart2, X, BookOpen, Bell, Clock, RefreshCw } from "lucide-react";
 import type { FinalVerdict } from "@/lib/types";
 
 const INDICES = [
@@ -30,6 +31,10 @@ export default function Dashboard() {
     const { shield, session } = useCapitalStore();
     const { chatOpen, toggleChat } = useUIStore();
     const [showChart, setShowChart] = useState(false);
+    const [isWatching, setIsWatching] = useState(false);   // trader told alerts to watch this verdict
+    const [watchError, setWatchError] = useState<string | null>(null);
+    const [elapsedSec, setElapsedSec] = useState(0);       // pipeline elapsed timer
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // ── Queries ───────────────────────────────────────────────────
     const { mutate: runAnalysis } = useAnalyze();
@@ -74,8 +79,76 @@ export default function Dashboard() {
         }
     }, [setSymbol, setVerdict, verdict, agentOutputs]);
 
+    // ── Elapsed timer while analysis runs ───────────────────────
+    useEffect(() => {
+        if (isAnalyzing) {
+            setElapsedSec(0);
+            timerRef.current = setInterval(() => setElapsedSec(s => s + 1), 1000);
+        } else {
+            if (timerRef.current) clearInterval(timerRef.current);
+        }
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, [isAnalyzing]);
+
+    // ── "I'm watching this" — tell fm-alerts price monitor ──────
+    // This is NOT trade execution. The trader places the trade themselves
+    // on Zerodha. This just activates Telegram price alerts (entry zone,
+    // T1/T2 hit, SL hit, hedge adjustment) for the current verdict.
+    const handleWatchVerdict = useCallback(async () => {
+        if (!verdict?.trade_plan) return;
+        const tp = verdict.trade_plan;
+        const hp = verdict.hedge_plan;
+        try {
+            const r = await fetch("/api/alerts/trade/set", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    symbol: verdict.best_index,
+                    verdict: verdict.verdict,
+                    direction: tp.direction,
+                    entry_low: tp.entry_low,
+                    entry_high: tp.entry_high,
+                    stop_loss: tp.stop_loss,
+                    target1: tp.target1,
+                    target2: tp.target2,
+                    target3: tp.target3 ?? null,
+                    instrument: tp.instrument,
+                    rr_ratio: tp.rr,
+                    execution_score: verdict.execution_score,
+                    confidence: verdict.confidence,
+                    hedge_type: hp?.hedge_type ?? "NONE",
+                    hedge_strike: hp?.strike ?? null,
+                    ic_short_call: hp?.sell_ce ?? null,
+                    ic_short_put: hp?.sell_pe ?? null,
+                    units: 1,
+                }),
+            });
+            if (r.ok) {
+                setIsWatching(true);
+                setWatchError(null);
+            } else {
+                setWatchError("Alerts service unavailable — check fm-alerts is running on :8005");
+            }
+        } catch {
+            setWatchError("Could not reach alerts service (:8005)");
+        }
+    }, [verdict]);
+
+    const handleClearWatch = useCallback(async () => {
+        await fetch("/api/alerts/trade", { method: "DELETE" }).catch(() => { });
+        setIsWatching(false);
+        setWatchError(null);
+    }, []);
+
+    // Derive regime from verdict for env theming
+    const regime = verdict?.regime ?? "UNKNOWN";
+
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-bg">
+        <div
+            className="flex flex-col h-screen overflow-hidden"
+            style={{ background: "var(--bg)" }}
+            data-regime={regime}
+        >
 
             {/* ── TOP HUD ───────────────────────────────────────────── */}
             <TopHUD verdict={verdict} session={session} shield={shield} symbol={symbol} />
@@ -117,16 +190,50 @@ export default function Dashboard() {
                                 onClick={handleAnalyze}
                                 disabled={isAnalyzing}
                                 className={cn(
-                                    "flex items-center gap-2 px-5 py-2.5 rounded-lg font-mono text-[12px] font-black",
-                                    "border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+                                    "flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-[12px] font-black",
+                                    "transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed magnetic",
                                     isAnalyzing
-                                        ? "bg-bl/10 border-bl/40 text-bl"
-                                        : "bg-bull/10 border-bull/40 text-bull hover:bg-bull/15 active:scale-95"
+                                        ? "border border-bl/40 text-bl"
+                                        : "border border-[var(--accent-edge)] text-[var(--accent)] hover:shadow-glow-sm active:scale-95"
                                 )}
+                                style={{ background: isAnalyzing ? "rgba(58,158,255,0.07)" : "var(--accent-dim)" }}
                             >
-                                <Play size={12} className={isAnalyzing ? "animate-spin" : ""} />
-                                {isAnalyzing ? "Analysing…" : "▶  RUN ANALYSIS"}
+                                {isAnalyzing
+                                    ? <Clock size={12} className="animate-spin" />
+                                    : <Play size={12} />
+                                }
+                                {isAnalyzing ? `Analysing… ${elapsedSec}s` : "▶  RUN ANALYSIS"}
                             </button>
+
+                            {/* "I'm watching this" — activates Telegram price alerts */}
+                            {verdict && verdict.verdict !== "WAIT" && verdict.trade_plan && (
+                                isWatching
+                                    ? <button
+                                        onClick={handleClearWatch}
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border border-bull/40 bg-bull/10 text-bull hover:bg-bear/10 hover:border-bear/40 hover:text-bear transition-all"
+                                        title="Stop watching — clears price alerts"
+                                    >
+                                        <Bell size={11} className="animate-pulse" />
+                                        Watching — tap to stop
+                                    </button>
+                                    : <button
+                                        onClick={handleWatchVerdict}
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border border-[#1a2232] bg-[#101520] text-[#8a9ab5] hover:border-bl/40 hover:text-bl transition-all"
+                                        title="Watch this verdict — get Telegram alerts when price hits entry zone, T1, T2, or SL"
+                                    >
+                                        <Bell size={11} />
+                                        Watch levels
+                                    </button>
+                            )}
+
+                            {/* Journal link */}
+                            <Link
+                                href="/journal"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border border-[#1a2232] bg-[#101520] text-[#48566a] hover:text-[#ecf0f8] transition-colors ml-auto"
+                            >
+                                <BookOpen size={11} />
+                                Journal
+                            </Link>
 
                             {/* Index selector */}
                             <select
@@ -170,19 +277,46 @@ export default function Dashboard() {
                             </button>
                         </div>
 
-                        {/* Error */}
+                        {/* Slow pipeline warning (>30s) */}
+                        {isAnalyzing && elapsedSec >= 30 && (
+                            <div className="flex items-center gap-2 px-4 py-2.5 bg-[#e8a020]/5 border border-[#e8a020]/20 rounded-lg">
+                                <Clock size={12} className="text-[#e8a020] shrink-0" />
+                                <span className="font-mono text-[11px] text-[#e8a020]">
+                                    Pipeline is taking longer than usual ({elapsedSec}s). Gemini may be busy — wait up to 90s.
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Watch error */}
+                        {watchError && (
+                            <div className="flex items-center gap-2 px-4 py-2.5 bg-bear/5 border border-bear/20 rounded-lg">
+                                <AlertCircle size={12} className="text-bear shrink-0" />
+                                <span className="font-mono text-[11px] text-bear flex-1">{watchError}</span>
+                                <button onClick={() => setWatchError(null)} className="text-t3 hover:text-t1">
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Error — with retry */}
                         {error && (
                             <div className="flex items-center gap-2 px-4 py-2.5 bg-bear/5 border border-bear/20 rounded-lg">
                                 <AlertCircle size={12} className="text-bear shrink-0" />
                                 <span className="font-mono text-[11px] text-bear flex-1">{error}</span>
-                                <button onClick={() => setError(null)} className="text-t3 hover:text-t1 ml-auto">
+                                <button
+                                    onClick={() => { setError(null); handleAnalyze(); }}
+                                    className="flex items-center gap-1 font-mono text-[10px] text-[#3a9eff] border border-[#3a9eff]/30 rounded px-2 py-0.5 hover:bg-[#3a9eff]/10"
+                                >
+                                    <RefreshCw size={10} /> Retry
+                                </button>
+                                <button onClick={() => setError(null)} className="text-t3 hover:text-t1 ml-1">
                                     <X size={12} />
                                 </button>
                             </div>
                         )}
 
                         {/* ── VERDICT BANNER — THE PRODUCT ─────────────── */}
-                        <VerdictBanner verdict={verdict} isAnalyzing={isAnalyzing} />
+                        <VerdictBanner verdict={verdict} isAnalyzing={isAnalyzing} elapsedSec={elapsedSec} />
 
                     </div>
 

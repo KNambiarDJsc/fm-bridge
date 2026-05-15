@@ -2,22 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ══════════════════════════════════════════════════════════════
+   FM TRADING AGENCY v5 — CINEMATIC DESIGN SYSTEM
+   State-first UI: the entire environment reacts to market regime
+   ══════════════════════════════════════════════════════════════ */
+
 :root {
-    /* Colour tokens — matches spec §9.2 and all prior HTML prototype colours */
-    --bg: #07090d;
-    --bg2: #0b0f17;
-    --bg3: #101520;
-    --b: #1a2232;
-    --b2: #252f42;
-    --t1: #ecf0f8;
-    --t2: #8a9ab5;
-    --t3: #48566a;
-    --bull: #0db37a;
-    --bear: #f04f4f;
-    --hedge: #8b5cf6;
-    --wait: #e8a020;
+    /* ── Core backgrounds ─────────────────────────────────────── */
+    --bg: #060816;
+    --bg2: #0a0e1a;
+    --bg3: #0e1428;
+    --b: #182035;
+    --b2: #1f2d4a;
+
+    /* ── Typography ───────────────────────────────────────────── */
+    --t1: #e8edf8;
+    --t2: #7d8ea8;
+    --t3: #3d4f68;
+
+    /* ── Verdict palette ──────────────────────────────────────── */
+    --bull: #00c896;
+    --bull2: #4cffb2;
+    --bear: #ff4d5a;
+    --bear2: #ff8590;
+    --hedge: #9d7dff;
+    --hedge2: #c4b0ff;
+    --wait: #f5a623;
+    --wait2: #ffd07a;
     --bl: #3a9eff;
-    --cy: #00d4c8;
+    --cy: #00e5d4;
+
+    /* ── Ambient accent — changes with regime ─────────────────── */
+    --accent: #00c896;
+    --accent-dim: rgba(0, 200, 150, 0.08);
+    --accent-glow: rgba(0, 200, 150, 0.15);
+    --accent-edge: rgba(0, 200, 150, 0.35);
+
+    /* ── Glass layers ─────────────────────────────────────────── */
+    --glass-bg: rgba(255, 255, 255, 0.025);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-shine: rgba(255, 255, 255, 0.04);
+}
+
+/* ══ REGIME THEMES — the environment shifts with market state ═══ */
+[data-regime="BULL_TREND"] {
+    --accent: #00c896;
+    --accent-dim: rgba(0, 200, 150, 0.07);
+    --accent-glow: rgba(0, 200, 150, 0.18);
+    --accent-edge: rgba(0, 200, 150, 0.4);
+}
+
+[data-regime="BEAR_TREND"] {
+    --accent: #ff4d5a;
+    --accent-dim: rgba(255, 77, 90, 0.07);
+    --accent-glow: rgba(255, 77, 90, 0.15);
+    --accent-edge: rgba(255, 77, 90, 0.35);
+}
+
+[data-regime="VOLATILE"] {
+    --accent: #f5a623;
+    --accent-dim: rgba(245, 166, 35, 0.07);
+    --accent-glow: rgba(245, 166, 35, 0.15);
+    --accent-edge: rgba(245, 166, 35, 0.35);
+}
+
+[data-regime="RANGE"] {
+    --accent: #3a9eff;
+    --accent-dim: rgba(58, 158, 255, 0.06);
+    --accent-glow: rgba(58, 158, 255, 0.12);
+    --accent-edge: rgba(58, 158, 255, 0.3);
+}
+
+[data-regime="EVENT_DRIVEN"] {
+    --accent: #9d7dff;
+    --accent-dim: rgba(157, 125, 255, 0.07);
+    --accent-glow: rgba(157, 125, 255, 0.15);
+    --accent-edge: rgba(157, 125, 255, 0.35);
 }
 
 * {
@@ -40,14 +100,47 @@ body {
     overflow-x: hidden;
 }
 
-/* Scrollbar — dark minimal */
+/* ══ AMBIENT BACKGROUND FIELD ════════════════════════════════════
+   Subtle radial glow behind the entire app that shifts with regime */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-glow), transparent),
+        radial-gradient(ellipse 50% 60% at 100% 100%, rgba(58, 158, 255, 0.04), transparent);
+    pointer-events: none;
+    z-index: 0;
+    transition: background 1.2s ease;
+}
+
+/* Subtle grid texture */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* All content above the ambient bg */
+#__next {
+    position: relative;
+    z-index: 1;
+}
+
+/* ══ SCROLLBAR ════════════════════════════════════════════════ */
 ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg2);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -59,31 +152,62 @@ body {
     background: var(--t3);
 }
 
-/* Mono class helper */
+/* ══ TYPOGRAPHY HELPERS ══════════════════════════════════════ */
 .mono {
     font-family: var(--font-mono), 'JetBrains Mono', monospace;
 }
 
-/* KV tile pattern (reused across all 4 sections) */
+.intel {
+    font-family: var(--font-head), 'Syne', sans-serif;
+}
+
+/* ══ GLASS CARD — the primary surface ═══════════════════════ */
+.glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+        0 0 0 1px var(--glass-shine) inset,
+        0 4px 32px rgba(0, 0, 0, 0.4);
+}
+
+.glass-accent {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-edge);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+        0 0 40px var(--accent-glow),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+}
+
+/* ══ KV TILES ════════════════════════════════════════════════ */
 .kv-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 7px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 6px;
 }
 
 .kv {
-    background: var(--bg3);
-    border: 1px solid var(--b);
-    border-radius: 7px;
-    padding: 9px 11px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 8px;
+    padding: 9px 12px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.kv:hover {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .kv-key {
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: 8.5px;
     color: var(--t3);
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.8px;
     font-weight: 700;
     margin-bottom: 4px;
 }
@@ -98,31 +222,233 @@ body {
 
 .kv-sub {
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: 8.5px;
     color: var(--t3);
-    margin-top: 2px;
+    margin-top: 3px;
 }
 
-/* Verdict banner pulse glow */
-@keyframes verdictGlow {
+/* ══ ANIMATIONS ═════════════════════════════════════════════ */
+
+/* Verdict morph-in */
+@keyframes verdictMorphIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.97);
+        filter: blur(4px);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(2px) scale(1.005);
+        filter: blur(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.verdict-enter {
+    animation: verdictMorphIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Ambient pulse ring */
+@keyframes ambientPulse {
 
     0%,
     100% {
-        box-shadow: 0 0 20px rgba(13, 179, 122, 0.15);
+        opacity: 0.6;
+        transform: scale(1);
     }
 
     50% {
-        box-shadow: 0 0 40px rgba(13, 179, 122, 0.30);
+        opacity: 1;
+        transform: scale(1.02);
     }
 }
 
-.verdict-bull {
-    animation: verdictGlow 3s ease infinite;
+/* Score ring fill */
+@keyframes ringFill {
+    from {
+        stroke-dashoffset: 220;
+    }
+
+    to {
+        stroke-dashoffset: var(--ring-offset);
+    }
 }
 
-/* Section tab indicator */
+.score-ring {
+    animation: ringFill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.3s;
+}
+
+/* Pulse dot */
+@keyframes pulseDot {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 var(--accent);
+    }
+
+    50% {
+        opacity: 0.7;
+        box-shadow: 0 0 0 4px transparent;
+    }
+}
+
+.live-dot {
+    animation: pulseDot 2s ease infinite;
+}
+
+/* Data count-up shimmer */
+@keyframes dataIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.data-in {
+    animation: dataIn 0.3s ease forwards;
+}
+
+/* Volatility waveform */
+@keyframes wave1 {
+
+    0%,
+    100% {
+        height: 8px
+    }
+
+    50% {
+        height: 22px
+    }
+}
+
+@keyframes wave2 {
+
+    0%,
+    100% {
+        height: 14px
+    }
+
+    50% {
+        height: 6px
+    }
+}
+
+@keyframes wave3 {
+
+    0%,
+    100% {
+        height: 18px
+    }
+
+    50% {
+        height: 8px
+    }
+}
+
+@keyframes wave4 {
+
+    0%,
+    100% {
+        height: 6px
+    }
+
+    50% {
+        height: 20px
+    }
+}
+
+@keyframes wave5 {
+
+    0%,
+    100% {
+        height: 12px
+    }
+
+    50% {
+        height: 4px
+    }
+}
+
+/* Slide up for alerts */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.25s ease forwards;
+}
+
+/* Fade in */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Shimmer scan on hover */
+@keyframes shimmerScan {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(200%);
+    }
+}
+
+/* Magnetic hover lift */
+.magnetic {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.magnetic:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Tab active — accent-driven underline */
 .tab-active {
     color: var(--t1);
-    border-bottom: 2px solid var(--bl);
-    background: rgba(58, 158, 255, 0.06);
+    border-bottom: 2px solid var(--accent);
+    background: var(--accent-dim);
+}
+
+/* ══ CONFIDENCE RING SVG ═════════════════════════════════════ */
+.conf-ring-track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.06);
+}
+
+.conf-ring-fill {
+    fill: none;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
