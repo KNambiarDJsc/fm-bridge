@@ -69,10 +69,10 @@ export function CopilotChat({ onClose }: { onClose: () => void }) {
                             "max-w-[85%] rounded-lg px-3 py-2 font-mono text-[12px] leading-relaxed",
                             m.role === "user"
                                 ? "bg-bl/15 text-t1 border border-bl/20"
-                                : "text-t2 rounded-lg" style = {{ background: "#131924", border: "1px solid #1e2d45" }}
-            )}>
-                        {m.content}
-                    </div>
+                                : "text-t2 rounded-lg"
+                        )} style={m.role !== "user" ? { background: "#131924", border: "1px solid #1e2d45" } : undefined}>
+                            {m.content}
+                        </div>
           </div>
         ))}
             {isPending && (
