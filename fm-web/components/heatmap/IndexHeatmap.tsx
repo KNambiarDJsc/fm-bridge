@@ -2,7 +2,7 @@
 
 import { cn, fmtPrice, fmtPct } from "@/lib/utils";
 import type { IndexScore } from "@/lib/types";
-import { RefreshCw, Zap } from "lucide-react";
+import { RefreshCw, TrendingUp } from "lucide-react";
 
 interface Props {
     indices: IndexScore[];
@@ -13,98 +13,81 @@ interface Props {
     isLoading?: boolean;
 }
 
-const REGIME_GRADIENT: Record<string, string> = {
-    BULL: "from-[#00c896]/[0.12] to-transparent",
-    BEAR: "from-[#ff4d5a]/[0.10] to-transparent",
-    SIDE: "from-transparent to-transparent",
-};
-
-const REGIME_COLOR: Record<string, string> = {
-    BULL: "#00c896",
-    BEAR: "#ff4d5a",
-    SIDE: "#3d4f68",
-};
-
-function scoreColor(s: number) {
-    if (s >= 72) return "#00c896";
-    if (s >= 55) return "#e8edf8";
-    if (s >= 40) return "#f5a623";
-    return "#ff4d5a";
+function scoreColor(s: number): string {
+    if (s >= 72) return "#12e89e";
+    if (s >= 55) return "#f0f4ff";
+    if (s >= 40) return "#fbbf24";
+    return "#ff5561";
 }
 
+const REGIME_COLOR: Record<string, string> = {
+    BULL: "#12e89e", BEAR: "#ff5561", SIDE: "#556680",
+};
+
 export function IndexHeatmap({ indices, best, currentSymbol, onSwitch, onRefresh, isLoading }: Props) {
-    const switchGap = best && currentSymbol !== best.name
-        ? (indices.find(i => i.name === currentSymbol)?.score ?? 0) : 0;
-    const suggestSwitch = best && switchGap > 0 && (best.score - switchGap) >= 15;
+    const cur = indices.find(i => i.name === currentSymbol);
+    const bestScore = best?.score ?? 0;
+    const curScore = cur?.score ?? 0;
+    const suggest = best && currentSymbol !== best.name && (bestScore - curScore) >= 15;
 
     return (
         <div
             className="overflow-hidden rounded-2xl"
-            style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.055)",
-                backdropFilter: "blur(20px)",
-            }}
+            style={{ background: "#0d1117", border: "1px solid #1e2d45" }}
         >
             {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.045]">
-                <div className="flex items-center gap-2">
-                    <div className="w-[5px] h-[5px] rounded-full bg-t3" />
-                    <span className="font-mono text-[9px] font-bold text-t3 uppercase tracking-[2.5px]">
-                        Index Intelligence Field
-                    </span>
-                </div>
+            <div
+                className="flex items-center gap-3 px-5 py-3 border-b"
+                style={{ borderColor: "#1e2d45", background: "#0a0c13" }}
+            >
+                <span className="font-mono text-[10px] font-bold text-t2 uppercase tracking-[0.1em]">
+                    Index Intelligence
+                </span>
+                <span className="font-mono text-[10px] text-t3">— {indices.length} indices tracked</span>
                 <button
                     onClick={onRefresh}
                     disabled={isLoading}
-                    className="ml-auto p-1.5 rounded-lg transition-all hover:bg-white/[0.05] text-t3 hover:text-t1 disabled:opacity-40"
+                    className="ml-auto p-1.5 rounded-lg transition-all"
+                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid #1e2d45" }}
                 >
-                    <RefreshCw size={11} className={isLoading ? "animate-spin" : ""} />
+                    <RefreshCw size={12} className={cn("text-t2", isLoading && "animate-spin")} />
                 </button>
             </div>
 
-            {/* Opportunity alert */}
-            {suggestSwitch && best && (
+            {/* Opportunity bar */}
+            {suggest && best && (
                 <div
-                    className="flex items-center gap-3 px-4 py-2 border-b"
-                    style={{
-                        background: "rgba(0,200,150,0.05)",
-                        borderColor: "rgba(0,200,150,0.18)",
-                    }}
+                    className="flex items-center gap-3 px-5 py-2.5 border-b"
+                    style={{ background: "rgba(18,232,158,0.05)", borderColor: "rgba(18,232,158,0.18)" }}
                 >
-                    <Zap size={11} className="text-bull shrink-0" />
-                    <span className="font-mono text-[10px] text-t2 flex-1">
-                        <b className="text-bull">{best.name}</b> shows strongest setup today —{" "}
-                        {best.score} vs {switchGap}
+                    <TrendingUp size={13} className="text-[#12e89e] shrink-0" />
+                    <span className="font-mono text-[11px] text-t2">
+                        <b className="text-[#12e89e]">{best.name}</b> shows strongest setup today — {best.score} vs {curScore}
                     </span>
                     <button
                         onClick={() => onSwitch(best.name)}
-                        className="font-mono text-[9px] font-black text-bull border border-bull/30 rounded-lg px-2.5 py-1 hover:bg-bull/10 transition-colors shrink-0"
+                        className="ml-auto font-mono text-[10px] font-black px-3 py-1 rounded-lg shrink-0 transition-all hover:opacity-80"
+                        style={{ background: "rgba(18,232,158,0.12)", border: "1px solid rgba(18,232,158,0.3)", color: "#12e89e" }}
                     >
                         Analyse →
                     </button>
                 </div>
             )}
 
-            {/* Intelligence grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {indices.map((idx, i) => (
+            {/* Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+                {indices.map((idx) => (
                     <IndexCell
                         key={idx.name}
                         index={idx}
                         isCurrent={idx.name === currentSymbol}
                         isBest={idx.name === best?.name}
-                        position={i}
                         onClick={() => !idx.error && onSwitch(idx.name)}
                     />
                 ))}
                 {isLoading && indices.length === 0 &&
                     Array.from({ length: 10 }).map((_, i) => (
-                        <div
-                            key={i}
-                            className="h-[76px] animate-pulse"
-                            style={{ background: "rgba(255,255,255,0.015)" }}
-                        />
+                        <div key={i} className="h-[76px] animate-pulse-slow" style={{ background: "#131924" }} />
                     ))
                 }
             </div>
@@ -112,101 +95,83 @@ export function IndexHeatmap({ indices, best, currentSymbol, onSwitch, onRefresh
     );
 }
 
-function IndexCell({ index, isCurrent, isBest, position, onClick }: {
-    index: IndexScore; isCurrent: boolean; isBest: boolean; position: number; onClick: () => void;
+function IndexCell({ index, isCurrent, isBest, onClick }: {
+    index: IndexScore; isCurrent: boolean; isBest: boolean; onClick: () => void;
 }) {
     const sc = scoreColor(index.score);
-    const rColor = REGIME_COLOR[index.regime] ?? "#3d4f68";
-    const isActive = isCurrent || isBest;
+    const rColor = REGIME_COLOR[index.regime] ?? "#556680";
 
     return (
         <button
             onClick={onClick}
-            className={cn(
-                "relative text-left transition-all duration-200 group overflow-hidden",
-                "border-r border-b border-white/[0.04]",
-                index.error && "opacity-40 cursor-default",
-            )}
+            className="relative text-left transition-all duration-150 group overflow-hidden"
             style={{
-                padding: "10px 12px",
-                background: isCurrent
-                    ? "rgba(58,158,255,0.06)"
-                    : isBest
-                        ? "rgba(0,200,150,0.05)"
-                        : "transparent",
+                padding: "12px 14px",
+                background: isCurrent ? "rgba(96,165,250,0.06)" : isBest ? "rgba(18,232,158,0.04)" : "transparent",
+                borderRight: "1px solid #1e2d45",
+                borderBottom: "1px solid #1e2d45",
             }}
         >
-            {/* Hover fill */}
+            {/* Hover */}
             <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                style={{ background: `${rColor}08` }}
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: `${rColor}06` }}
             />
 
-            {/* Active indicator line */}
-            {isActive && (
+            {/* Active top border */}
+            {(isCurrent || isBest) && (
                 <div
-                    className="absolute top-0 left-0 right-0 h-[1.5px]"
-                    style={{ backgroundColor: isCurrent ? "#3a9eff" : "#00c896" }}
+                    className="absolute top-0 left-0 right-0 h-[2px]"
+                    style={{ backgroundColor: isCurrent ? "#60a5fa" : "#12e89e" }}
                 />
             )}
 
             <div className="relative">
                 {/* Name */}
-                <div className="flex items-center gap-1 mb-1.5">
+                <div className="flex items-center justify-between mb-2">
                     <span
-                        className="font-mono text-[8.5px] font-bold uppercase tracking-[0.5px] truncate"
-                        style={{ color: isCurrent ? "#3a9eff" : isBest ? "#00c896" : "#7d8ea8" }}
+                        className="font-mono text-[10px] font-bold uppercase tracking-[0.06em] truncate"
+                        style={{ color: isCurrent ? "#60a5fa" : isBest ? "#12e89e" : "#9dafc8" }}
                     >
                         {index.name.replace("NIFTY ", "").replace(" 50", "50")}
                     </span>
-                    {isCurrent && (
-                        <span className="text-[6px] text-bl ml-auto shrink-0">●</span>
-                    )}
-                    {isBest && !isCurrent && (
-                        <span className="text-[7px] text-bull ml-auto shrink-0">★</span>
-                    )}
+                    {isCurrent && <span style={{ color: "#60a5fa", fontSize: "8px" }}>●</span>}
+                    {isBest && !isCurrent && <span style={{ color: "#12e89e", fontSize: "9px" }}>★</span>}
                 </div>
 
-                {/* Score — dominant number */}
+                {/* Score — dominant */}
                 <div
                     className="font-mono font-black leading-none tabular-nums"
                     style={{
-                        fontSize: "20px",
-                        color: index.error ? "#3d4f68" : sc,
-                        textShadow: !index.error && index.score >= 70
-                            ? `0 0 16px ${sc}50` : "none",
+                        fontSize: "22px",
+                        color: index.error ? "#556680" : sc,
+                        textShadow: !index.error && index.score >= 70 ? `0 0 12px ${sc}50` : "none",
                     }}
                 >
                     {index.error ? "—" : index.score}
                 </div>
 
-                {/* Regime + price */}
-                <div className="flex items-center justify-between mt-1">
-                    <span
-                        className="font-mono text-[8px] font-bold uppercase tracking-[0.3px]"
-                        style={{ color: rColor, opacity: 0.8 }}
-                    >
+                {/* Regime + change */}
+                <div className="flex items-center justify-between mt-1.5">
+                    <span className="font-mono text-[10px] font-bold uppercase" style={{ color: rColor, opacity: 0.85 }}>
                         {index.error ? "ERR" : index.regime}
                     </span>
                     {!index.error && (
                         <span
-                            className="font-mono text-[8px] tabular-nums"
-                            style={{ color: index.change_pct >= 0 ? "#00c896" : "#ff4d5a", opacity: 0.9 }}
+                            className="font-mono text-[10px] font-bold tabular-nums"
+                            style={{ color: index.change_pct >= 0 ? "#12e89e" : "#ff5561" }}
                         >
                             {fmtPct(index.change_pct)}
                         </span>
                     )}
                 </div>
 
-                {/* Mini score bar */}
+                {/* Score bar */}
                 {!index.error && (
-                    <div
-                        className="mt-1.5 h-[2px] rounded-full overflow-hidden"
-                        style={{ background: "rgba(255,255,255,0.05)" }}
-                    >
+                    <div className="mt-2 h-[2px] rounded-full overflow-hidden" style={{ background: "#1e2d45" }}>
                         <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{ width: `${index.score}%`, backgroundColor: sc }}
+                            className="h-full rounded-full"
+                            style={{ width: `${index.score}%`, backgroundColor: sc, transition: "width 0.6s ease" }}
                         />
                     </div>
                 )}

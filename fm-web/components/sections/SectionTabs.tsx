@@ -19,103 +19,69 @@ export interface SectionTabsProps {
 }
 
 const TABS = [
-    {
-        id: "A" as const,
-        label: "Market Structure",
-        sub: "Regime · Indicators",
-        icon: "◈",
-    },
-    {
-        id: "B" as const,
-        label: "Options Pressure",
-        sub: "OI · PCR · GEX",
-        icon: "⬡",
-    },
-    {
-        id: "C" as const,
-        label: "Intelligence",
-        sub: "Macro · Sentiment · Events",
-        icon: "◎",
-    },
-    {
-        id: "D" as const,
-        label: "Risk Matrix",
-        sub: "Hedge · Position · Shield",
-        icon: "⬟",
-    },
+    { id: "A" as const, label: "Market Structure", sub: "Regime · Indicators", icon: "◈" },
+    { id: "B" as const, label: "Options Pressure", sub: "OI · PCR · GEX", icon: "⬡" },
+    { id: "C" as const, label: "Intelligence", sub: "Macro · Sentiment", icon: "◎" },
+    { id: "D" as const, label: "Risk Matrix", sub: "Hedge · Shield", icon: "⬟" },
 ];
 
 export function SectionTabs(props: SectionTabsProps) {
     const { activeSection, setSection } = useUIStore();
-    const activeTab = TABS.find(t => t.id === activeSection);
 
     return (
         <div
             className="overflow-hidden rounded-2xl"
-            style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.055)",
-                backdropFilter: "blur(20px)",
-            }}
+            style={{ background: "#0d1117", border: "1px solid #1e2d45" }}
         >
             {/* Tab bar */}
             <div
                 className="flex border-b"
-                style={{ borderColor: "rgba(255,255,255,0.045)", background: "rgba(0,0,0,0.2)" }}
+                style={{ borderColor: "#1e2d45", background: "#0a0c13" }}
             >
                 {TABS.map((tab) => {
-                    const isActive = activeSection === tab.id;
+                    const active = activeSection === tab.id;
                     return (
                         <button
                             key={tab.id}
                             onClick={() => setSection(tab.id)}
-                            className={cn(
-                                "flex-1 relative py-3 px-3 transition-all duration-200",
-                                "border-b-[1.5px]",
-                                isActive
-                                    ? "border-[var(--accent)]"
-                                    : "border-transparent hover:border-white/[0.1]",
-                            )}
+                            className="flex-1 relative py-3.5 px-3 transition-all duration-150"
                             style={{
-                                background: isActive ? "var(--accent-dim)" : "transparent",
+                                borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
+                                background: active ? "var(--accent-dim)" : "transparent",
                             }}
                         >
-                            {/* Accent glow on active */}
-                            {isActive && (
+                            {/* Glow bloom on active */}
+                            {active && (
                                 <div
-                                    className="absolute inset-x-0 bottom-0 h-[30px] pointer-events-none"
-                                    style={{
-                                        background: "linear-gradient(to top, var(--accent-glow), transparent)",
-                                    }}
+                                    className="absolute inset-x-0 bottom-0 h-8 pointer-events-none"
+                                    style={{ background: "linear-gradient(to top, var(--accent-glow), transparent)" }}
                                 />
                             )}
-                            <div className="relative flex flex-col items-start gap-0.5">
-                                {/* Icon + label */}
-                                <div className="flex items-center gap-1.5">
+                            <div className="relative flex flex-col items-start">
+                                <div className="flex items-center gap-1.5 mb-0.5">
                                     <span
-                                        className="font-mono text-[11px]"
-                                        style={{ color: isActive ? "var(--accent)" : "#3d4f68" }}
+                                        className="font-mono text-[12px]"
+                                        style={{ color: active ? "var(--accent)" : "#556680" }}
                                     >
                                         {tab.icon}
                                     </span>
                                     <span
-                                        className="font-head text-[11px] font-bold hidden sm:block"
-                                        style={{ color: isActive ? "#e8edf8" : "#7d8ea8" }}
+                                        className="font-head font-bold hidden sm:block"
+                                        style={{ fontSize: "12px", color: active ? "#f0f4ff" : "#9dafc8" }}
                                     >
                                         {tab.label}
                                     </span>
-                                    {/* Mobile: just letter */}
+                                    {/* Mobile: letter only */}
                                     <span
-                                        className="font-mono text-[11px] font-black sm:hidden"
-                                        style={{ color: isActive ? "var(--accent)" : "#7d8ea8" }}
+                                        className="font-mono text-[12px] font-black sm:hidden"
+                                        style={{ color: active ? "var(--accent)" : "#9dafc8" }}
                                     >
                                         {tab.id}
                                     </span>
                                 </div>
-                                {/* Sub-label */}
                                 <span
-                                    className="font-mono text-[8px] hidden lg:block"
-                                    style={{ color: isActive ? "rgba(232,237,248,0.4)" : "#3d4f68" }}
+                                    className="font-mono text-[10px] hidden lg:block leading-none"
+                                    style={{ color: active ? "rgba(240,244,255,0.4)" : "#556680" }}
                                 >
                                     {tab.sub}
                                 </span>
@@ -125,24 +91,24 @@ export function SectionTabs(props: SectionTabsProps) {
                 })}
             </div>
 
-            {/* Active module label */}
-            {activeTab && (
-                <div
-                    className="px-4 py-2 border-b flex items-center gap-2"
-                    style={{ borderColor: "rgba(255,255,255,0.03)", background: "rgba(0,0,0,0.12)" }}
-                >
-                    <span
-                        className="font-mono text-[8px] font-bold uppercase tracking-[2px]"
-                        style={{ color: "var(--accent)", opacity: 0.7 }}
+            {/* Active label strip */}
+            {(() => {
+                const t = TABS.find(t => t.id === activeSection);
+                return t ? (
+                    <div
+                        className="px-5 py-2 flex items-center gap-2 border-b"
+                        style={{ borderColor: "#1e2d45", background: "rgba(0,0,0,0.15)" }}
                     >
-                        {activeTab.icon} {activeTab.label}
-                    </span>
-                    <span className="font-mono text-[8px] text-t3">· {activeTab.sub}</span>
-                </div>
-            )}
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--accent)", opacity: 0.75 }}>
+                            {t.icon} {t.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-t3">· {t.sub}</span>
+                    </div>
+                ) : null;
+            })()}
 
-            {/* Panel body */}
-            <div className="p-4 min-h-[200px]">
+            {/* Content */}
+            <div className="p-5 min-h-[220px]">
                 {activeSection === "A" && <SectionA {...props} />}
                 {activeSection === "B" && <SectionB {...props} />}
                 {activeSection === "C" && <SectionC {...props} />}

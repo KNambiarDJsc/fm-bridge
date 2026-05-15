@@ -218,7 +218,7 @@ export default function Dashboard() {
                                     </button>
                                     : <button
                                         onClick={handleWatchVerdict}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border border-[#1a2232] bg-[#101520] text-[#8a9ab5] hover:border-bl/40 hover:text-bl transition-all"
+                                        className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-mono text-[11px] font-bold transition-all lift" style={{ background: "#131924", border: "1px solid #1e2d45", color: "#9dafc8" }}
                                         title="Watch this verdict — get Telegram alerts when price hits entry zone, T1, T2, or SL"
                                     >
                                         <Bell size={11} />
@@ -229,7 +229,7 @@ export default function Dashboard() {
                             {/* Journal link */}
                             <Link
                                 href="/journal"
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border border-[#1a2232] bg-[#101520] text-[#48566a] hover:text-[#ecf0f8] transition-colors ml-auto"
+                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-mono text-[11px] font-bold transition-all lift ml-auto" style={{ background: "#131924", border: "1px solid #1e2d45", color: "#9dafc8" }}
                             >
                                 <BookOpen size={11} />
                                 Journal
@@ -239,7 +239,7 @@ export default function Dashboard() {
                             <select
                                 value={symbol}
                                 onChange={(e) => setSymbol(e.target.value)}
-                                className="bg-bg3 border border-b rounded-lg px-3 py-2 font-mono text-[11px] text-t1 outline-none focus:border-bl/50 cursor-pointer"
+                                className="rounded-xl px-3 py-2.5 font-mono text-[12px] font-bold text-t1 outline-none cursor-pointer" style={{ background: "#131924", border: "1px solid #1e2d45", color: "#f0f4ff" }}
                             >
                                 {INDICES.map((s) => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -249,7 +249,7 @@ export default function Dashboard() {
                                 onClick={() => setShowChart(v => !v)}
                                 className={cn(
                                     "flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border transition-all",
-                                    showChart ? "bg-bl/10 border-bl/30 text-bl" : "bg-bg3 border-b text-t3 hover:text-t1"
+                                    showChart ? "" : ""
                                 )}
                             >
                                 <BarChart2 size={12} />
@@ -269,7 +269,7 @@ export default function Dashboard() {
                                 onClick={toggleChat}
                                 className={cn(
                                     "flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border transition-all",
-                                    chatOpen ? "bg-bl/10 border-bl/30 text-bl" : "bg-bg3 border-b text-t3 hover:text-t1"
+                                    chatOpen ? "" : ""
                                 )}
                             >
                                 <MessageCircle size={12} />

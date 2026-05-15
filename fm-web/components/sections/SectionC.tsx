@@ -9,9 +9,9 @@ interface Props {
 
 function NarrCard({ label, score, children }: { label: string; score?: number; children: React.ReactNode }) {
     return (
-        <div className="bg-bg3 border border-b rounded-lg p-3">
+        <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
             <div className="flex items-center mb-3">
-                <span className="font-mono text-[9px] font-bold text-t2 uppercase tracking-[1px]">{label}</span>
+                <span className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px]">{label}</span>
                 {score != null && (
                     <span className="ml-auto font-mono text-[13px] font-black text-t1">{score}/100</span>
                 )}
@@ -23,10 +23,10 @@ function NarrCard({ label, score, children }: { label: string; score?: number; c
 
 function Row({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: string }) {
     return (
-        <div className="flex items-baseline gap-2 font-mono text-[11px]">
-            <span className="text-t3 shrink-0 w-28">{label}</span>
+        <div className="flex items-baseline gap-2 font-mono text-[12px]">
+            <span className="text-t3 shrink-0 w-28 text-[11px]">{label}</span>
             <span className={cn("font-bold", tone ?? "text-t1")}>{value}</span>
-            {sub && <span className="text-t3 text-[10px]">{sub}</span>}
+            {sub && <span className="text-t3 text-[11px]">{sub}</span>}
         </div>
     );
 }
@@ -51,11 +51,11 @@ export function SectionC({ macro, agentOutputs }: Props) {
 
             {/* C3 — Legend Consensus (most prominent per spec §6.1) */}
             {legend && legend.total > 0 && (
-                <div className="bg-bg3 border border-b rounded-lg p-3">
-                    <div className="font-mono text-[9px] font-bold text-t2 uppercase tracking-[1px] mb-3">
+                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                    <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">
                         C3 · 20-Legend Advisor Consensus
                     </div>
-                    <div className="flex h-9 rounded-lg overflow-hidden border border-b mb-2">
+                    <div className="flex h-9 rounded-lg overflow-hidden border border-[#1e2d45] mb-2">
                         {legend.bull > 0 && (
                             <div className="bg-bull flex items-center justify-center font-mono text-[11px] font-black text-bg"
                                 style={{ flex: legend.bull }}>
@@ -63,7 +63,7 @@ export function SectionC({ macro, agentOutputs }: Props) {
                             </div>
                         )}
                         {legend.neutral > 0 && (
-                            <div className="bg-b2 flex items-center justify-center font-mono text-[10px] font-bold text-t2"
+                            <div className="bg-b2 flex items-center justify-center font-mono text-[11px] font-bold text-t2"
                                 style={{ flex: legend.neutral }}>
                                 {legend.neutral} NEUT
                             </div>
@@ -75,7 +75,7 @@ export function SectionC({ macro, agentOutputs }: Props) {
                             </div>
                         )}
                     </div>
-                    <div className="font-mono text-[10px] text-t3 mb-1">
+                    <div className="font-mono text-[11px] text-t3 mb-1">
                         {legend.bull}B / {legend.neutral}N / {legend.bear}Be of {legend.total} advisors
                     </div>
                     {legend.summary && (
@@ -138,9 +138,9 @@ export function SectionC({ macro, agentOutputs }: Props) {
                 {headlines.length > 0 && (
                     <>
                         <Divider />
-                        <div className="font-mono text-[8px] text-t3 uppercase tracking-[0.5px] mb-1">Live Headlines</div>
+                        <div className="font-mono text-[11px] text-t3 uppercase tracking-[0.5px] mb-1">Live Headlines</div>
                         {headlines.slice(0, 5).map((h, i) => (
-                            <div key={i} className="font-mono text-[10px] text-t2 leading-relaxed pl-2 border-l-2 border-bl/30">
+                            <div key={i} className="font-mono text-[11px] text-t2 leading-relaxed pl-2 border-l-2 border-bl/30">
                                 {h}
                             </div>
                         ))}

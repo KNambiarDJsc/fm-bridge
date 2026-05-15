@@ -17,8 +17,8 @@ export function SectionD({ verdict, shield }: Props) {
 
             {/* Trade Plan summary (if active trade) */}
             {tp && verdict?.verdict !== "WAIT" && (
-                <div className="bg-bg3 border border-b rounded-lg p-3">
-                    <div className="font-mono text-[9px] font-bold text-t2 uppercase tracking-[1px] mb-3">
+                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                    <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">
                         D0 · Active Trade Plan
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
@@ -33,15 +33,15 @@ export function SectionD({ verdict, shield }: Props) {
                         {tp.target3 && <PriceBlock label="Target 3" value={fmtPrice(tp.target3)} tone="text-bull" />}
                     </div>
                     {tp.entry_trigger && (
-                        <div className="p-2 rounded bg-bl/5 border border-bl/20 mb-2">
-                            <div className="font-mono text-[9px] text-bl font-bold uppercase mb-0.5">Entry Trigger</div>
-                            <div className="font-mono text-[10px] text-t2">{tp.entry_trigger}</div>
+                        <div className="p-2 rounded bg-bl/5 border border-[#1e2d45]l/20 mb-2">
+                            <div className="font-mono text-[11px] text-bl font-bold uppercase mb-0.5">Entry Trigger</div>
+                            <div className="font-mono text-[11px] text-t2">{tp.entry_trigger}</div>
                         </div>
                     )}
                     {tp.invalidation && (
-                        <div className="p-2 rounded bg-bear/5 border border-bear/20">
-                            <div className="font-mono text-[9px] text-bear font-bold uppercase mb-0.5">Invalidation</div>
-                            <div className="font-mono text-[10px] text-t2">{tp.invalidation}</div>
+                        <div className="p-2 rounded bg-bear/5 border border-[#1e2d45]ear/20">
+                            <div className="font-mono text-[11px] text-bear font-bold uppercase mb-0.5">Invalidation</div>
+                            <div className="font-mono text-[11px] text-t2">{tp.invalidation}</div>
                         </div>
                     )}
                 </div>
@@ -50,7 +50,7 @@ export function SectionD({ verdict, shield }: Props) {
             {/* Wait signal */}
             {ws && verdict?.verdict === "WAIT" && (
                 <div className="bg-wait/5 border border-wait/30 rounded-lg p-3">
-                    <div className="font-mono text-[9px] font-bold text-wait uppercase tracking-[1px] mb-2">D0 · WAIT Signal</div>
+                    <div className="font-mono text-[11px] font-bold text-wait uppercase tracking-[1px] mb-2">D0 · WAIT Signal</div>
                     <div className="font-mono text-[12px] text-t1 font-bold mb-2">{ws.reason}</div>
                     <div className="space-y-1.5">
                         <Row k="Re-entry Trigger" v={ws.re_entry_trigger} tone="text-t1" />
@@ -63,8 +63,8 @@ export function SectionD({ verdict, shield }: Props) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Hedge Structure */}
-                <div className="bg-bg3 border border-b rounded-lg p-3">
-                    <div className="font-mono text-[9px] font-bold text-t2 uppercase tracking-[1px] mb-3">D1 · Hedge Structure</div>
+                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                    <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">D1 · Hedge Structure</div>
                     {!hp || hp.hedge_type === "NONE" || !verdict || verdict.verdict === "WAIT" ? (
                         <div className="font-mono text-[11px] text-t3">
                             {verdict?.verdict === "WAIT"
@@ -79,8 +79,8 @@ export function SectionD({ verdict, shield }: Props) {
                 </div>
 
                 {/* Capital shield */}
-                <div className="bg-bg3 border border-b rounded-lg p-3">
-                    <div className="font-mono text-[9px] font-bold text-t2 uppercase tracking-[1px] mb-3">D2 · Capital Shield</div>
+                <div className="bg-[#131924] border border-[#1e2d45] rounded-lg p-3">
+                    <div className="font-mono text-[11px] font-bold text-t2 uppercase tracking-[1px] mb-3">D2 · Capital Shield</div>
                     {!shield ? (
                         <div className="font-mono text-[11px] text-t3">Bridge not connected — capital shield unavailable.</div>
                     ) : (
@@ -97,8 +97,8 @@ export function SectionD({ verdict, shield }: Props) {
 
 function PriceBlock({ label, value, tone }: { label: string; value: string; tone?: string }) {
     return (
-        <div className="bg-bg border border-b rounded-md p-2">
-            <div className="font-mono text-[8px] text-t3 uppercase mb-1">{label}</div>
+        <div className="bg-bg border border-[#1e2d45] rounded-md p-2">
+            <div className="font-mono text-[11px] text-t3 uppercase mb-1">{label}</div>
             <div className={cn("font-mono text-[13px] font-black", tone ?? "text-t1")}>{value}</div>
         </div>
     );
@@ -106,9 +106,9 @@ function PriceBlock({ label, value, tone }: { label: string; value: string; tone
 
 function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
     return (
-        <div className="flex justify-between items-start gap-2 py-1 border-b border-b/40">
-            <span className="font-mono text-[10px] text-t3 shrink-0">{k}</span>
-            <span className={cn("font-mono text-[10px] font-bold text-right", tone ?? "text-t1")}>{v}</span>
+        <div className="flex justify-between items-start gap-2 py-1 border-b border-[#1e2d45]/40">
+            <span className="font-mono text-[11px] text-t3 shrink-0">{k}</span>
+            <span className={cn("font-mono text-[11px] font-bold text-right", tone ?? "text-t1")}>{v}</span>
         </div>
     );
 }
@@ -128,12 +128,12 @@ function DirectionalHedge({ hp }: { hp: NonNullable<FinalVerdict["hedge_plan"]> 
             <Row k="Protects below" v={hp.protection_range ?? "—"} />
             {hp.exit_rule && (
                 <div className="mt-2 p-2 rounded bg-wait/5 border border-wait/20">
-                    <div className="font-mono text-[9px] text-wait font-bold uppercase mb-1">Exit Rule</div>
-                    <div className="font-mono text-[10px] text-t2 leading-relaxed">{hp.exit_rule}</div>
+                    <div className="font-mono text-[11px] text-wait font-bold uppercase mb-1">Exit Rule</div>
+                    <div className="font-mono text-[11px] text-t2 leading-relaxed">{hp.exit_rule}</div>
                 </div>
             )}
             {hp.disclaimer && (
-                <div className="font-mono text-[9px] text-t3 italic mt-1">{hp.disclaimer}</div>
+                <div className="font-mono text-[11px] text-t3 italic mt-1">{hp.disclaimer}</div>
             )}
         </div>
     );
@@ -154,12 +154,12 @@ function IronCondorCard({ hp }: { hp: NonNullable<FinalVerdict["hedge_plan"]> })
             {hp.protection_range && <Row k="Profit Zone" v={hp.protection_range} />}
             {hp.exit_rule && (
                 <div className="mt-2 p-2 rounded bg-wait/5 border border-wait/20">
-                    <div className="font-mono text-[9px] text-wait font-bold uppercase mb-1">Exit / Adjust Rule</div>
-                    <div className="font-mono text-[10px] text-t2 leading-relaxed">{hp.exit_rule}</div>
+                    <div className="font-mono text-[11px] text-wait font-bold uppercase mb-1">Exit / Adjust Rule</div>
+                    <div className="font-mono text-[11px] text-t2 leading-relaxed">{hp.exit_rule}</div>
                 </div>
             )}
             {hp.disclaimer && (
-                <div className="font-mono text-[9px] text-t3 italic mt-1">{hp.disclaimer}</div>
+                <div className="font-mono text-[11px] text-t3 italic mt-1">{hp.disclaimer}</div>
             )}
         </div>
     );
@@ -172,13 +172,13 @@ function CapitalDash({ shield }: { shield: CapitalShield }) {
     return (
         <div className="space-y-2">
             {/* Kill switch */}
-            <div className="flex justify-between items-center py-1 border-b border-b/40">
-                <span className="font-mono text-[10px] text-t3">Kill Switch</span>
+            <div className="flex justify-between items-center py-1 border-b border-[#1e2d45]/40">
+                <span className="font-mono text-[11px] text-t3">Kill Switch</span>
                 <span className={cn(
-                    "font-mono text-[10px] font-black px-2 py-0.5 rounded",
+                    "font-mono text-[11px] font-black px-2 py-0.5 rounded",
                     shield.kill_switch
-                        ? "bg-bear/20 text-bear border border-bear/40 animate-pulse-slow"
-                        : "bg-bull/10 text-bull border border-bull/20"
+                        ? "bg-bear/20 text-bear border border-[#1e2d45]ear/40 animate-pulse-slow"
+                        : "bg-bull/10 text-bull border border-[#1e2d45]ull/20"
                 )}>
                     {shield.kill_switch ? "🔴 ACTIVE" : "OFF"}
                 </span>
@@ -186,7 +186,7 @@ function CapitalDash({ shield }: { shield: CapitalShield }) {
 
             {/* Daily DD bar */}
             <div>
-                <div className="flex justify-between font-mono text-[10px] text-t3 mb-1">
+                <div className="flex justify-between font-mono text-[11px] text-t3 mb-1">
                     <span>Daily DD</span>
                     <span className={ddPct > 70 ? "text-bear" : "text-t2"}>
                         {shield.daily_dd_pct.toFixed(2)}% / {shield.daily_dd_limit}%
@@ -202,7 +202,7 @@ function CapitalDash({ shield }: { shield: CapitalShield }) {
 
             {/* Weekly DD bar */}
             <div>
-                <div className="flex justify-between font-mono text-[10px] text-t3 mb-1">
+                <div className="flex justify-between font-mono text-[11px] text-t3 mb-1">
                     <span>Weekly DD</span>
                     <span className={wkPct > 70 ? "text-bear" : "text-t2"}>
                         {shield.weekly_dd_pct.toFixed(2)}% / {shield.weekly_dd_limit}%
