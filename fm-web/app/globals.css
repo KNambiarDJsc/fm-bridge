@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* Colour tokens — matches spec §9.2 and all prior HTML prototype colours */
+    --bg: #07090d;
+    --bg2: #0b0f17;
+    --bg3: #101520;
+    --b: #1a2232;
+    --b2: #252f42;
+    --t1: #ecf0f8;
+    --t2: #8a9ab5;
+    --t3: #48566a;
+    --bull: #0db37a;
+    --bear: #f04f4f;
+    --hedge: #8b5cf6;
+    --wait: #e8a020;
+    --bl: #3a9eff;
+    --cy: #00d4c8;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--t1);
+    font-family: var(--font-head), 'Syne', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+/* Scrollbar — dark minimal */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg2);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--b2);
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--t3);
+}
+
+/* Mono class helper */
+.mono {
+    font-family: var(--font-mono), 'JetBrains Mono', monospace;
+}
+
+/* KV tile pattern (reused across all 4 sections) */
+.kv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 7px;
+}
+
+.kv {
+    background: var(--bg3);
+    border: 1px solid var(--b);
+    border-radius: 7px;
+    padding: 9px 11px;
+}
+
+.kv-key {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.kv-val {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--t1);
+    word-break: break-word;
+}
+
+.kv-sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--t3);
+    margin-top: 2px;
+}
+
+/* Verdict banner pulse glow */
+@keyframes verdictGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(13, 179, 122, 0.15);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(13, 179, 122, 0.30);
+    }
+}
+
+.verdict-bull {
+    animation: verdictGlow 3s ease infinite;
+}
+
+/* Section tab indicator */
+.tab-active {
+    color: var(--t1);
+    border-bottom: 2px solid var(--bl);
+    background: rgba(58, 158, 255, 0.06);
+}
