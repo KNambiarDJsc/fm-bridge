@@ -1,4 +1,8 @@
 {
+  "/page": "app/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/api/bridge/[...path]/route": "app/api/bridge/[...path]/route.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/journal/page": "app/journal/page.js",
+  "/api/journal/[...path]/route": "app/api/journal/[...path]/route.js",
+  "/api/analyze/route": "app/api/analyze/route.js"
 }

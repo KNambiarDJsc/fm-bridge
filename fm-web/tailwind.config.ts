@@ -37,11 +37,11 @@ const config: Config = {
                 "regime-edge":"var(--regime-edge)",
             },
             fontSize: {
-                "10": "10px",
-                "11": "11px",
-                "12": "12px",
-                "13": "13px",
-                "15": "15px",
+                "10": "13px",
+                "11": "14px",
+                "12": "15px",
+                "13": "16px",
+                "15": "18px",
             },
             boxShadow: {
                 "verdict-bull":  "0 4px 40px rgba(52,211,153,0.12)",
