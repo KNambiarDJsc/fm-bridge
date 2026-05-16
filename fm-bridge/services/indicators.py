@@ -28,7 +28,7 @@ log = logging.getLogger("fm.indicators")
 try:
     import pandas_ta as ta
     _PTA = True
-    log.info("pandas-ta loaded ✓")
+    log.info("pandas-ta loaded [OK]")
 except ImportError:
     _PTA = False
     log.warning("pandas-ta not installed — using fallback indicators. Run: pip install pandas-ta")

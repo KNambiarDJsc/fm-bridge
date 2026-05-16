@@ -211,8 +211,8 @@ if __name__ == "__main__":
     s = get_settings()
     print(f"\n  FM Trading Agency — Alerts & Morning Briefing v6.0")
     print(f"  Port:     8005")
-    print(f"  Telegram: {'✓ configured' if s.telegram_token else '✗ NOT CONFIGURED — add TELEGRAM_TOKEN to .env'}")
-    print(f"  Email:    {'✓ configured' if s.resend_api_key else '— disabled'}")
+    print(f"  Telegram: {'[OK] configured' if s.telegram_token else '[X] NOT CONFIGURED — add TELEGRAM_TOKEN to .env'}")
+    print(f"  Email:    {'[OK] configured' if s.resend_api_key else '— disabled'}")
     print(f"  Bridge:   {s.bridge_url}")
     print(f"  Agents:   {s.agents_url}\n")
 

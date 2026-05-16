@@ -92,7 +92,7 @@ async def lifespan(app: FastAPI):
     mi.set_kite(kite)
 
     # 3. Start KiteTicker WebSocket (real-time ticks)
-    from websocket.ticker import start_ticker
+    from ws.ticker import start_ticker
     start_ticker(kite)
 
     # 4. Start APScheduler
@@ -106,9 +106,9 @@ async def lifespan(app: FastAPI):
     loop.run_in_executor(None, _prewarm_caches)
 
     log.info("")
-    log.info("  ✓  Bridge running at  http://localhost:8002")
-    log.info("  ✓  WebSocket ticks at ws://localhost:8002/ws/ticks")
-    log.info("  ✓  Docs at           http://localhost:8002/docs")
+    log.info("  [OK]  Bridge running at  http://localhost:8002")
+    log.info("  [OK]  WebSocket ticks at ws://localhost:8002/ws/ticks")
+    log.info("  [OK]  Docs at           http://localhost:8002/docs")
     log.info("")
     _print_endpoints()
 
@@ -116,7 +116,7 @@ async def lifespan(app: FastAPI):
 
     # ── SHUTDOWN ──────────────────────────────────────────────────
     log.info("Bridge shutting down ...")
-    from websocket.ticker   import stop_ticker
+    from ws.ticker   import stop_ticker
     from scheduler.jobs     import stop_scheduler
     stop_ticker()
     stop_scheduler()
@@ -133,7 +133,7 @@ def _prewarm_caches() -> None:
         fetch_macro_context(force=True)
         prefetch_all()
         get_multi_index_heatmap(force=True)
-        log.info("✓  Cache pre-warm complete")
+        log.info("[OK]  Cache pre-warm complete")
     except Exception as e:
         log.warning("Cache pre-warm partial failure (non-fatal): %s", e)
 
@@ -257,7 +257,7 @@ def _tick_callback(name: str, price: float) -> None:
 
 
 # Register the callback once (after app is created)
-from websocket.ticker import subscribe_ws
+from ws.ticker import subscribe_ws
 subscribe_ws(_tick_callback)
 
 

@@ -75,7 +75,7 @@ def _totp_auto_login(kite: KiteConnect, settings: Settings) -> Optional[str]:
         log.debug("TOTP credentials not configured — falling back to manual login.")
         return None
 
-    log.info("🔐  TOTP auto-login starting for %s ...", user_id)
+    log.info("[AUTH] TOTP auto-login starting for %s ...", user_id)
 
     try:
         session = requests.Session()
@@ -141,7 +141,7 @@ def _totp_auto_login(kite: KiteConnect, settings: Settings) -> Optional[str]:
 
         sess_data  = kite.generate_session(request_token, api_secret=settings.api_secret)
         access_token = sess_data["access_token"]
-        log.info("✓  TOTP auto-login successful for %s", user_id)
+        log.info("[OK] TOTP auto-login successful for %s", user_id)
         return access_token
 
     except requests.RequestException as e:
@@ -176,7 +176,7 @@ def _manual_login(kite: KiteConnect, settings: Settings) -> Optional[str]:
 
     request_token = input("  Paste the request_token here: ").strip()
     if not request_token:
-        print("❌  No request_token. Exiting.")
+        print("[ERR] No request_token. Exiting.")
         sys.exit(1)
 
     try:
@@ -184,7 +184,7 @@ def _manual_login(kite: KiteConnect, settings: Settings) -> Optional[str]:
         access_token = sess_data["access_token"]
         return access_token
     except Exception as e:
-        print(f"\n❌  Session generation failed: {e}")
+        print(f"\n[ERR] Session generation failed: {e}")
         sys.exit(1)
 
 
@@ -208,7 +208,7 @@ def authenticate(settings: Optional[Settings] = None) -> KiteConnect:
 
     api_key = settings.api_key
     if not api_key:
-        print("\n❌  ZERODHA API_KEY not set in .env — cannot authenticate.")
+        print("\n[ERR] ZERODHA API_KEY not set in .env -- cannot authenticate.")
         sys.exit(1)
 
     kite = KiteConnect(api_key=api_key)
@@ -220,7 +220,7 @@ def authenticate(settings: Optional[Settings] = None) -> KiteConnect:
         kite.set_access_token(token_cache["access_token"])
         if _verify_token(kite):
             profile = kite.profile()
-            print(f"\n  ✓  Logged in as: {profile.get('user_name')} (cached token)")
+            print(f"\n  [OK] Logged in as: {profile.get('user_name')} (cached token)")
             return kite
         else:
             log.warning("Cached token invalid — re-authenticating.")
@@ -233,7 +233,7 @@ def authenticate(settings: Optional[Settings] = None) -> KiteConnect:
         access_token = _manual_login(kite, settings)
 
     if not access_token:
-        print("❌  Authentication failed. Exiting.")
+        print("[ERR] Authentication failed. Exiting.")
         sys.exit(1)
 
     kite.set_access_token(access_token)
@@ -246,5 +246,5 @@ def authenticate(settings: Optional[Settings] = None) -> KiteConnect:
     })
 
     profile = kite.profile()
-    print(f"\n  ✓  Authenticated as: {profile.get('user_name')} ({profile.get('email')})")
+    print(f"\n  [OK] Authenticated as: {profile.get('user_name')} ({profile.get('email')})")
     return kite

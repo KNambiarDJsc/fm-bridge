@@ -1,352 +1,244 @@
 "use client";
 
-import { useCallback, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { TopHUD } from "@/components/hud/TopHUD";
-import { VerdictBanner } from "@/components/verdict/VerdictBanner";
-import { IndexHeatmap } from "@/components/heatmap/IndexHeatmap";
-import { SectionTabs } from "@/components/sections/SectionTabs";
-import { CopilotChat } from "@/components/chat/CopilotChat";
-import { PriceChart } from "@/components/chart/PriceChart";
+import { motion } from "framer-motion";
+import { ArrowRight, Activity, Brain, Shield, BarChart3, Zap, Layers, Terminal, ChevronRight } from "lucide-react";
 
-import { useAnalysisStore, useCapitalStore, useUIStore } from "@/store/trading";
-import {
-    useAnalyze, useMultiIndexHeatmap, useMacroContext,
-    useIndicators, useOptionsChain, useBridgeHealth,
-} from "@/lib/api";
-import { cn } from "@/lib/utils";
-import { Play, MessageCircle, AlertCircle, BarChart2, X, BookOpen, Bell, Clock, RefreshCw } from "lucide-react";
-import type { FinalVerdict } from "@/lib/types";
+const FADE_UP = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+        opacity: 1, y: 0,
+        transition: { delay: i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+    }),
+};
 
-const INDICES = [
-    "NIFTY 50", "BANK NIFTY", "NIFTY IT", "NIFTY AUTO", "NIFTY METAL",
-    "NIFTY PHARMA", "NIFTY FMCG", "NIFTY MIDCAP 100", "NIFTY NEXT 50", "NIFTY FINANCIAL",
+const PIPELINE_LAYERS = [
+    { id: "L1", name: "Macro", desc: "RBI, VIX, FII/DII, oil, global cues" },
+    { id: "L2", name: "Technical", desc: "EMA, RSI, MACD, ADX, Supertrend" },
+    { id: "L3", name: "Options", desc: "PCR, Max Pain, OPR, Gamma walls" },
+    { id: "L4", name: "Strategy", desc: "Regime detection, trade synthesis" },
+    { id: "L5", name: "Sentiment", desc: "News + social signal scoring" },
+    { id: "L6", name: "Options Deep", desc: "Greeks, skew, volatility surface" },
+    { id: "L7", name: "Risk", desc: "Capital shield, drawdown, kill switch" },
+    { id: "L8", name: "Hedge", desc: "Iron Condor, protective puts/calls" },
+    { id: "L9", name: "Sovereign", desc: "Final verdict arbitration" },
 ];
 
-export default function Dashboard() {
-    const {
-        symbol, verdict, isAnalyzing, lastAnalyzed, error,
-        agentOutputs, setSymbol, setAnalyzing, setVerdict, setError,
-    } = useAnalysisStore();
-    const { shield, session } = useCapitalStore();
-    const { chatOpen, toggleChat } = useUIStore();
-    const [showChart, setShowChart] = useState(false);
-    const [isWatching, setIsWatching] = useState(false);   // trader told alerts to watch this verdict
-    const [watchError, setWatchError] = useState<string | null>(null);
-    const [elapsedSec, setElapsedSec] = useState(0);       // pipeline elapsed timer
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+const FEATURES = [
+    {
+        icon: Brain,
+        title: "9-Layer AI Pipeline",
+        desc: "Sequential LangGraph reasoning across macro, technical, options, and sentiment data. Not a single prompt — a multi-agent orchestration.",
+    },
+    {
+        icon: Activity,
+        title: "Live Zerodha Bridge",
+        desc: "Millisecond-latency WebSocket connections. Real-time ticks, programmatic hedging, and order execution through KiteConnect.",
+    },
+    {
+        icon: Shield,
+        title: "Capital Shield",
+        desc: "Automated drawdown protection with daily/weekly limits, kill switch, and intelligent recovery scaling tied to live equity.",
+    },
+    {
+        icon: Layers,
+        title: "Regime-Reactive",
+        desc: "The entire system adapts to market regime — Bull, Bear, Volatile, Range, or Event-Driven. Strategy shifts with structure.",
+    },
+    {
+        icon: BarChart3,
+        title: "Options Intelligence",
+        desc: "OPR analysis, gamma walls, max pain, IV percentile, and PCR — compressed into actionable verdicts, not raw data.",
+    },
+    {
+        icon: Terminal,
+        title: "Strategic Copilot",
+        desc: "Context-aware AI that explains verdicts, regime shifts, and hedge rationale. Not ChatGPT — a tactical command interface.",
+    },
+];
 
-    // ── Queries ───────────────────────────────────────────────────
-    const { mutate: runAnalysis } = useAnalyze();
-    const { data: heatmapData, refetch: refreshHeatmap, isFetching: heatmapLoading } = useMultiIndexHeatmap();
-    const { data: macroData } = useMacroContext();
-    const { data: indicatorsData } = useIndicators(symbol);
-    const { data: optionsData } = useOptionsChain(symbol);
-    const { data: health } = useBridgeHealth();
-
-    const bridgeOnline = health?.logged_in ?? false;
-
-    // ── Run analysis ──────────────────────────────────────────────
-    const handleAnalyze = useCallback(() => {
-        if (isAnalyzing) return;
-        setAnalyzing(true);
-        runAnalysis(
-            { symbol },
-            {
-                onSuccess: (data) => {
-                    // Agent sub-outputs may be embedded in future pipeline versions
-                    const raw = data as unknown as Record<string, unknown>;
-                    setVerdict(data.data as FinalVerdict, {
-                        l1: (raw.l1 ?? {}) as Record<string, unknown>,
-                        l2: (raw.l2 ?? {}) as Record<string, unknown>,
-                        l3: (raw.l3 ?? {}) as Record<string, unknown>,
-                        l4: (raw.l4 ?? {}) as Record<string, unknown>,
-                        l5: (raw.l5 ?? {}) as Record<string, unknown>,
-                        l6: (raw.l6 ?? {}) as Record<string, unknown>,
-                    });
-                },
-                onError: (e) => setError(e.message),
-            }
-        );
-    }, [symbol, isAnalyzing, runAnalysis, setAnalyzing, setVerdict, setError]);
-
-    // ── Switch index ──────────────────────────────────────────────
-    const handleSwitch = useCallback((name: string) => {
-        setSymbol(name);
-        // If a verdict exists, patch the best_index; otherwise just switch symbol
-        if (verdict) {
-            setVerdict({ ...verdict, best_index: name }, agentOutputs);
-        }
-    }, [setSymbol, setVerdict, verdict, agentOutputs]);
-
-    // ── Elapsed timer while analysis runs ───────────────────────
-    useEffect(() => {
-        if (isAnalyzing) {
-            setElapsedSec(0);
-            timerRef.current = setInterval(() => setElapsedSec(s => s + 1), 1000);
-        } else {
-            if (timerRef.current) clearInterval(timerRef.current);
-        }
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [isAnalyzing]);
-
-    // ── "I'm watching this" — tell fm-alerts price monitor ──────
-    // This is NOT trade execution. The trader places the trade themselves
-    // on Zerodha. This just activates Telegram price alerts (entry zone,
-    // T1/T2 hit, SL hit, hedge adjustment) for the current verdict.
-    const handleWatchVerdict = useCallback(async () => {
-        if (!verdict?.trade_plan) return;
-        const tp = verdict.trade_plan;
-        const hp = verdict.hedge_plan;
-        try {
-            const r = await fetch("/api/alerts/trade/set", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    symbol: verdict.best_index,
-                    verdict: verdict.verdict,
-                    direction: tp.direction,
-                    entry_low: tp.entry_low,
-                    entry_high: tp.entry_high,
-                    stop_loss: tp.stop_loss,
-                    target1: tp.target1,
-                    target2: tp.target2,
-                    target3: tp.target3 ?? null,
-                    instrument: tp.instrument,
-                    rr_ratio: tp.rr,
-                    execution_score: verdict.execution_score,
-                    confidence: verdict.confidence,
-                    hedge_type: hp?.hedge_type ?? "NONE",
-                    hedge_strike: hp?.strike ?? null,
-                    ic_short_call: hp?.sell_ce ?? null,
-                    ic_short_put: hp?.sell_pe ?? null,
-                    units: 1,
-                }),
-            });
-            if (r.ok) {
-                setIsWatching(true);
-                setWatchError(null);
-            } else {
-                setWatchError("Alerts service unavailable — check fm-alerts is running on :8005");
-            }
-        } catch {
-            setWatchError("Could not reach alerts service (:8005)");
-        }
-    }, [verdict]);
-
-    const handleClearWatch = useCallback(async () => {
-        await fetch("/api/alerts/trade", { method: "DELETE" }).catch(() => { });
-        setIsWatching(false);
-        setWatchError(null);
-    }, []);
-
-    // Derive regime from verdict for env theming
-    const regime = verdict?.regime ?? "UNKNOWN";
-
+export default function HomePage() {
     return (
-        <div
-            className="flex flex-col h-screen overflow-hidden"
-            style={{ background: "var(--bg)" }}
-            data-regime={regime}
-        >
+        <div className="min-h-screen flex flex-col">
 
-            {/* ── TOP HUD ───────────────────────────────────────────── */}
-            <TopHUD verdict={verdict} session={session} shield={shield} symbol={symbol} />
+            {/* ── NAV ──────────────────────────────────────────── */}
+            <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-14"
+                style={{ background: "rgba(5,5,7,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--b)" }}>
+                <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-[var(--regime)] live-dot" />
+                    <span className="font-mono text-13 font-bold tracking-[0.15em] text-t1">SOVEREIGN</span>
+                </div>
+                <div className="flex items-center gap-6">
+                    <span className="hidden sm:block font-mono text-11 text-t3">v6.0</span>
+                    <Link href="/dashboard" className="flex items-center gap-2 px-4 py-1.5 rounded-md font-mono text-11 font-bold text-t0 transition-colors"
+                        style={{ background: "var(--regime-mid)", border: "1px solid var(--regime-edge)" }}>
+                        OPEN COPILOT <ArrowRight size={12} />
+                    </Link>
+                </div>
+            </nav>
 
-            {/* ── MAIN SCROLL AREA ──────────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto">
-                <div className="max-w-[1600px] mx-auto px-3 sm:px-4 py-4 space-y-4">
+            {/* ── HERO ─────────────────────────────────────────── */}
+            <section className="relative flex flex-col items-center justify-center min-h-screen px-6 pt-20">
 
-                    {/* Bridge offline banner */}
-                    {health && !bridgeOnline && (
-                        <div className="flex items-center gap-2 px-4 py-2.5 bg-bear/5 border border-bear/20 rounded-lg">
-                            <AlertCircle size={12} className="text-bear shrink-0" />
-                            <span className="font-mono text-[11px] text-t2">
-                                Bridge offline — run{" "}
-                                <code className="text-t1 bg-bg3 px-1 rounded">python fm-bridge/app.py</code>
-                                {" "}for live data. Analysis runs in limited mode.
-                            </span>
-                        </div>
-                    )}
+                {/* Regime halo */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] pointer-events-none"
+                    style={{ background: "radial-gradient(ellipse at 50% 0%, var(--regime-glow), transparent 70%)" }} />
 
-                    {/* ── INDEX HEATMAP ─────────────────────────────────── */}
-                    <IndexHeatmap
-                        indices={heatmapData?.indices ?? []}
-                        best={heatmapData?.best}
-                        currentSymbol={symbol}
-                        onSwitch={handleSwitch}
-                        onRefresh={() => refreshHeatmap()}
-                        isLoading={heatmapLoading}
-                    />
+                <motion.div className="relative z-10 max-w-3xl text-center" initial="hidden" animate="visible">
 
-                    {/* ── CONTROL ROW + VERDICT BANNER ─────────────────── */}
-                    <div className="space-y-3">
+                    <motion.div variants={FADE_UP} custom={0}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md mb-8 font-mono text-11 text-t2"
+                        style={{ background: "var(--glass)", border: "1px solid var(--b)" }}>
+                        <Zap size={11} className="text-[var(--regime)]" />
+                        AI-NATIVE DERIVATIVES INTELLIGENCE
+                    </motion.div>
 
-                        {/* Controls */}
-                        <div className="flex items-center gap-2 flex-wrap">
+                    <motion.h1 variants={FADE_UP} custom={1}
+                        className="type-headline text-5xl sm:text-6xl md:text-7xl mb-6">
+                        Trade Market Structure,{" "}
+                        <span className="text-t3">Not Noise</span>
+                    </motion.h1>
 
-                            {/* Run button */}
-                            <button
-                                onClick={handleAnalyze}
-                                disabled={isAnalyzing}
-                                className={cn(
-                                    "flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-[12px] font-black",
-                                    "transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed magnetic",
-                                    isAnalyzing
-                                        ? "border border-bl/40 text-bl"
-                                        : "border border-[var(--accent-edge)] text-[var(--accent)] hover:shadow-glow-sm active:scale-95"
-                                )}
-                                style={{ background: isAnalyzing ? "rgba(58,158,255,0.07)" : "var(--accent-dim)" }}
-                            >
-                                {isAnalyzing
-                                    ? <Clock size={12} className="animate-spin" />
-                                    : <Play size={12} />
-                                }
-                                {isAnalyzing ? `Analysing… ${elapsedSec}s` : "▶  RUN ANALYSIS"}
-                            </button>
+                    <motion.p variants={FADE_UP} custom={2}
+                        className="type-body text-base sm:text-lg max-w-xl mx-auto mb-10">
+                        FM Sovereign runs a 9-layer LangGraph pipeline across macro, technical, options, and sentiment data — then delivers a single, institutional-grade verdict.
+                    </motion.p>
 
-                            {/* "I'm watching this" — activates Telegram price alerts */}
-                            {verdict && verdict.verdict !== "WAIT" && verdict.trade_plan && (
-                                isWatching
-                                    ? <button
-                                        onClick={handleClearWatch}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border border-bull/40 bg-bull/10 text-bull hover:bg-bear/10 hover:border-bear/40 hover:text-bear transition-all"
-                                        title="Stop watching — clears price alerts"
-                                    >
-                                        <Bell size={11} className="animate-pulse" />
-                                        Watching — tap to stop
-                                    </button>
-                                    : <button
-                                        onClick={handleWatchVerdict}
-                                        className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-mono text-[11px] font-bold transition-all lift" style={{ background: "var(--bg3)", border: "1px solid var(--b)", color: "var(--t2)" }}
-                                        title="Watch this verdict — get Telegram alerts when price hits entry zone, T1, T2, or SL"
-                                    >
-                                        <Bell size={11} />
-                                        Watch levels
-                                    </button>
-                            )}
+                    <motion.div variants={FADE_UP} custom={3}
+                        className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <Link href="/dashboard"
+                            className="flex items-center gap-2 px-6 py-3 rounded-lg font-sans text-sm font-semibold bg-t0 text-bg transition-transform active:scale-[0.97]">
+                            Launch Mission Control <ArrowRight size={14} />
+                        </Link>
+                        <a href="https://github.com/KNambiarDJsc/fm-bridge" target="_blank" rel="noreferrer"
+                            className="flex items-center gap-2 px-6 py-3 rounded-lg font-sans text-sm font-medium text-t2 transition-colors hover:text-t1"
+                            style={{ border: "1px solid var(--b)" }}>
+                            Documentation
+                        </a>
+                    </motion.div>
 
-                            {/* Journal link */}
-                            <Link
-                                href="/journal"
-                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-mono text-[11px] font-bold transition-all lift ml-auto" style={{ background: "var(--bg3)", border: "1px solid var(--b)", color: "var(--t2)" }}
-                            >
-                                <BookOpen size={11} />
-                                Journal
-                            </Link>
+                </motion.div>
 
-                            {/* Index selector */}
-                            <select
-                                value={symbol}
-                                onChange={(e) => setSymbol(e.target.value)}
-                                className="rounded-xl px-3 py-2.5 font-mono text-[12px] font-bold text-t1 outline-none cursor-pointer" style={{ background: "var(--bg3)", border: "1px solid var(--b)", color: "var(--t1)" }}
-                            >
-                                {INDICES.map((s) => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                {/* Scroll indicator */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
+                    className="absolute bottom-8 font-mono text-10 text-t3 tracking-widest">
+                    SCROLL
+                </motion.div>
+            </section>
 
-                            {/* Chart toggle */}
-                            <button
-                                onClick={() => setShowChart(v => !v)}
-                                className={cn(
-                                    "flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border transition-all",
-                                    showChart ? "bg-bl/10 border-bl/30 text-bl" : "bg-bg3 border-b text-t3 hover:text-t1"
-                                )}
-                            >
-                                <BarChart2 size={12} />
-                                Chart
-                            </button>
+            {/* ── PIPELINE SHOWCASE ────────────────────────────── */}
+            <section className="relative px-6 py-24 max-w-5xl mx-auto w-full">
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+                    <motion.div variants={FADE_UP} custom={0} className="mb-12">
+                        <div className="type-label mb-3">THE PIPELINE</div>
+                        <h2 className="type-headline text-3xl sm:text-4xl mb-4">
+                            9 Agents. One Verdict.
+                        </h2>
+                        <p className="type-body max-w-lg">
+                            Each layer contributes an independent signal. The Sovereign agent arbitrates conflicts and produces a single, executable trade plan.
+                        </p>
+                    </motion.div>
 
-                            {/* Last run */}
-                            {lastAnalyzed && !isAnalyzing && (
-                                <span className="font-mono text-[10px] text-t3 ml-auto hidden sm:block">
-                                    {new Date(lastAnalyzed).toLocaleTimeString("en-IN")}
-                                    {verdict?.pipeline_ms != null && ` · ${(verdict.pipeline_ms / 1000).toFixed(1)}s`}
-                                </span>
-                            )}
-
-                            {/* Copilot toggle */}
-                            <button
-                                onClick={toggleChat}
-                                className={cn(
-                                    "flex items-center gap-1.5 px-3 py-2 rounded-lg font-mono text-[11px] border transition-all",
-                                    chatOpen ? "bg-bl/10 border-bl/30 text-bl" : "bg-bg3 border-b text-t3 hover:text-t1"
-                                )}
-                            >
-                                <MessageCircle size={12} />
-                                Copilot
-                            </button>
-                        </div>
-
-                        {/* Slow pipeline warning (>30s) */}
-                        {isAnalyzing && elapsedSec >= 30 && (
-                            <div className="flex items-center gap-2 px-4 py-2.5 bg-[#e8a020]/5 border border-[#e8a020]/20 rounded-lg">
-                                <Clock size={12} className="text-[#e8a020] shrink-0" />
-                                <span className="font-mono text-[11px] text-[#e8a020]">
-                                    Pipeline is taking longer than usual ({elapsedSec}s). Gemini may be busy — wait up to 90s.
-                                </span>
-                            </div>
-                        )}
-
-                        {/* Watch error */}
-                        {watchError && (
-                            <div className="flex items-center gap-2 px-4 py-2.5 bg-bear/5 border border-bear/20 rounded-lg">
-                                <AlertCircle size={12} className="text-bear shrink-0" />
-                                <span className="font-mono text-[11px] text-bear flex-1">{watchError}</span>
-                                <button onClick={() => setWatchError(null)} className="text-t3 hover:text-t1">
-                                    <X size={12} />
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Error — with retry */}
-                        {error && (
-                            <div className="flex items-center gap-2 px-4 py-2.5 bg-bear/5 border border-bear/20 rounded-lg">
-                                <AlertCircle size={12} className="text-bear shrink-0" />
-                                <span className="font-mono text-[11px] text-bear flex-1">{error}</span>
-                                <button
-                                    onClick={() => { setError(null); handleAnalyze(); }}
-                                    className="flex items-center gap-1 font-mono text-[10px] text-[#3a9eff] border border-[#3a9eff]/30 rounded px-2 py-0.5 hover:bg-[#3a9eff]/10"
-                                >
-                                    <RefreshCw size={10} /> Retry
-                                </button>
-                                <button onClick={() => setError(null)} className="text-t3 hover:text-t1 ml-1">
-                                    <X size={12} />
-                                </button>
-                            </div>
-                        )}
-
-                        {/* ── VERDICT BANNER — THE PRODUCT ─────────────── */}
-                        <VerdictBanner verdict={verdict} isAnalyzing={isAnalyzing} elapsedSec={elapsedSec} />
-
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-[1px] rounded-xl overflow-hidden" style={{ background: "var(--b)" }}>
+                        {PIPELINE_LAYERS.map((l, i) => (
+                            <motion.div key={l.id} variants={FADE_UP} custom={i * 0.5}
+                                className="px-5 py-4 transition-colors hover:bg-[var(--glass-hover)]"
+                                style={{ background: "var(--bg-s)" }}>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-mono text-10 font-bold text-[var(--regime)]">{l.id}</span>
+                                    <span className="font-sans text-13 font-semibold text-t1">{l.name}</span>
+                                </div>
+                                <p className="font-mono text-11 text-t3">{l.desc}</p>
+                            </motion.div>
+                        ))}
                     </div>
+                </motion.div>
+            </section>
 
-                    {/* ── PRICE CHART (collapsible) ─────────────────────── */}
-                    {showChart && (
-                        <PriceChart symbol={symbol} interval="day" range="6mo" height={260} />
-                    )}
+            {/* ── FEATURES ─────────────────────────────────────── */}
+            <section className="relative px-6 py-24 max-w-5xl mx-auto w-full">
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+                    <motion.div variants={FADE_UP} custom={0} className="mb-12">
+                        <div className="type-label mb-3">CAPABILITIES</div>
+                        <h2 className="type-headline text-3xl sm:text-4xl">
+                            Institutional Intelligence,<br />Discretionary Execution
+                        </h2>
+                    </motion.div>
 
-                    {/* ── 4-SECTION ANALYSIS PANEL ─────────────────────── */}
-                    <SectionTabs
-                        verdict={verdict}
-                        indicators={indicatorsData}
-                        options={optionsData}
-                        macro={macroData}
-                        shield={shield ?? undefined}
-                        agentOutputs={agentOutputs}
-                        symbol={symbol}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {FEATURES.map((f, i) => (
+                            <motion.div key={f.title} variants={FADE_UP} custom={i}
+                                className="surface-e p-6 group transition-colors hover:border-[var(--b-h)]">
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-4 text-[var(--regime)]"
+                                    style={{ background: "var(--regime-dim)", border: "1px solid var(--regime-edge)" }}>
+                                    <f.icon size={18} strokeWidth={1.5} />
+                                </div>
+                                <h3 className="type-title text-15 mb-2">{f.title}</h3>
+                                <p className="type-body text-13 leading-relaxed">{f.desc}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+                </motion.div>
+            </section>
 
-                    <div className="h-6" />
-                </div>
-            </div>
+            {/* ── VERDICT SHOWCASE ─────────────────────────────── */}
+            <section className="relative px-6 py-24 max-w-5xl mx-auto w-full">
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }}>
+                    <motion.div variants={FADE_UP} custom={0} className="text-center mb-12">
+                        <div className="type-label mb-3">VERDICT FIRST</div>
+                        <h2 className="type-headline text-3xl sm:text-4xl mb-4">
+                            One Signal. Not Fifty Widgets.
+                        </h2>
+                        <p className="type-body max-w-lg mx-auto">
+                            Every morning, the system delivers a single verdict: BULL, BEAR, HEDGE, or WAIT — with entry, stop, targets, and hedge already calculated.
+                        </p>
+                    </motion.div>
 
-            {/* ── COPILOT CHAT DRAWER ───────────────────────────────── */}
-            {chatOpen && (
-                <div className="h-[320px] shrink-0 border-t border-b animate-slide-up">
-                    <CopilotChat onClose={toggleChat} />
-                </div>
-            )}
+                    {/* Mock verdict */}
+                    <motion.div variants={FADE_UP} custom={1}
+                        className="surface-regime p-6 sm:p-8 max-w-2xl mx-auto">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--bull)] live-dot" />
+                            <span className="font-mono text-10 text-t3 tracking-widest">NIFTY 50 · BULL TREND · SCORE 87/100</span>
+                        </div>
+                        <div className="type-headline text-4xl sm:text-5xl mb-6" style={{ color: "var(--bull)" }}>
+                            BULL TRADE
+                        </div>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-13">
+                            <span><span className="text-t3 text-11">Entry</span> <span className="text-t1 font-semibold">24,180 – 24,220</span></span>
+                            <span><span className="text-t3 text-11">SL</span> <span className="text-bear font-semibold">24,050</span></span>
+                            <span><span className="text-t3 text-11">T1</span> <span className="text-bull font-semibold">24,420</span></span>
+                            <span><span className="text-t3 text-11">T2</span> <span className="text-[var(--cyan)] font-semibold">24,580</span></span>
+                            <span><span className="text-t3 text-11">R:R</span> <span className="text-t1 font-semibold">1:2.4</span></span>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            </section>
 
+            {/* ── CTA ──────────────────────────────────────────── */}
+            <section className="relative px-6 py-32">
+                <div className="absolute inset-0 pointer-events-none"
+                    style={{ background: "radial-gradient(ellipse at 50% 100%, var(--regime-glow), transparent 60%)" }} />
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}
+                    className="relative z-10 max-w-2xl mx-auto text-center">
+                    <motion.h2 variants={FADE_UP} custom={0}
+                        className="type-headline text-4xl sm:text-5xl mb-6">
+                        Ready to Trade Structure
+                    </motion.h2>
+                    <motion.div variants={FADE_UP} custom={1}>
+                        <Link href="/dashboard"
+                            className="inline-flex items-center gap-2 px-8 py-4 rounded-lg font-sans text-sm font-bold bg-t0 text-bg transition-transform active:scale-[0.97]">
+                            Enter Mission Control <ChevronRight size={16} />
+                        </Link>
+                    </motion.div>
+                </motion.div>
+            </section>
+
+            {/* ── FOOTER ───────────────────────────────────────── */}
+            <footer className="px-6 py-8 flex items-center justify-between" style={{ borderTop: "1px solid var(--b)" }}>
+                <span className="font-mono text-11 text-t3 tracking-wider">FM SOVEREIGN v6.0</span>
+                <span className="font-mono text-10 text-t3">AI-NATIVE DERIVATIVES INTELLIGENCE</span>
+            </footer>
         </div>
     );
 }

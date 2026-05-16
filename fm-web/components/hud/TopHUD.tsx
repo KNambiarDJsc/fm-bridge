@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import type { SessionContext, CapitalShield, FinalVerdict } from "@/lib/types";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { SessionContext, CapitalShield, FinalVerdict } from "@/lib/types";
 
 interface Props {
     verdict?: FinalVerdict | null;
@@ -12,22 +12,22 @@ interface Props {
 }
 
 const SESSION_META: Record<string, { label: string; color: string }> = {
-    PRE_OPEN: { label: "Pre-Open", color: "var(--t3)" },
-    OPENING_VOLATILITY: { label: "Opening ⚡", color: "var(--wait)" },
-    MIDDAY_CHOP: { label: "Mid-Day", color: "var(--bl)" },
-    POWER_HOUR: { label: "Power Hour", color: "var(--bull)" },
-    CLOSING: { label: "Closing", color: "var(--wait)" },
-    POST_CLOSE: { label: "Post-Close", color: "var(--t3)" },
-    EXPIRY_MORNING: { label: "EXPIRY ⚠", color: "var(--bear)" },
+    PRE_OPEN:            { label: "Pre-Open",     color: "var(--t3)" },
+    OPENING_VOLATILITY:  { label: "Opening",      color: "var(--wait)" },
+    MIDDAY_CHOP:         { label: "Mid-Day",      color: "var(--blue)" },
+    POWER_HOUR:          { label: "Power Hour",   color: "var(--bull)" },
+    CLOSING:             { label: "Closing",       color: "var(--wait)" },
+    POST_CLOSE:          { label: "Post-Close",   color: "var(--t3)" },
+    EXPIRY_MORNING:      { label: "Expiry",       color: "var(--bear)" },
 };
 
 const REGIME_COLOR: Record<string, string> = {
-    BULL_TREND: "var(--bull)",
-    BEAR_TREND: "var(--bear)",
-    VOLATILE: "var(--wait)",
-    RANGE: "var(--bl)",
-    EVENT_DRIVEN: "var(--hedge)",
-    TRAP: "var(--bear)",
+    BULL_TREND:    "var(--bull)",
+    BEAR_TREND:    "var(--bear)",
+    VOLATILE:      "var(--wait)",
+    RANGE:         "var(--blue)",
+    EVENT_DRIVEN:  "var(--hedge)",
+    TRAP:          "var(--bear)",
 };
 
 function LiveClock({ istTime }: { istTime?: string }) {
@@ -44,7 +44,7 @@ function LiveClock({ istTime }: { istTime?: string }) {
         const id = setInterval(tick, 1000);
         return () => clearInterval(id);
     }, [istTime]);
-    return <>{t} IST</>;
+    return <>{t}</>;
 }
 
 export function TopHUD({ verdict, session, shield, symbol }: Props) {
@@ -55,166 +55,103 @@ export function TopHUD({ verdict, session, shield, symbol }: Props) {
     const ddUsed = shield && shield.daily_dd_limit > 0
         ? (shield.daily_dd_pct / shield.daily_dd_limit) * 100
         : 0;
-    const verdictColor =
-        verdict?.verdict === "BULL_TRADE" ? "var(--bull)" :
-            verdict?.verdict === "BEAR_TRADE" ? "var(--bear)" :
-                verdict?.verdict === "HEDGE_TRADE" ? "var(--hedge)" :
-                    verdict?.verdict === "WAIT" ? "var(--wait)" : "var(--t3)";
 
     return (
-        <div
-            className="w-full h-[48px] flex items-stretch shrink-0 overflow-x-auto"
-            style={{
-                background: "var(--bg2)",
-                borderBottom: "1px solid var(--b)",
-            }}
-        >
-            {/* Regime accent line across the very top */}
-            <div
-                className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none"
-                style={{
-                    background: `linear-gradient(90deg, transparent 0%, ${regimeColor}70 40%, ${regimeColor}70 60%, transparent 100%)`,
-                    zIndex: 2,
-                }}
-            />
+        <header className="w-full h-11 flex items-stretch shrink-0 relative"
+            style={{ background: "var(--bg-s)", borderBottom: "1px solid var(--b)" }}>
 
-            {/* LOGO */}
-            <div className="px-4 flex items-center gap-2 border-r border-[var(--b)] shrink-0">
-                <div
-                    className="w-2 h-2 rounded-full live-dot"
-                    style={{ backgroundColor: regimeColor, boxShadow: `0 0 6px ${regimeColor}` }}
-                />
-                <span className="font-mono text-[13px] font-black tracking-[3px]" style={{ color: regimeColor }}>
-                    FM
-                </span>
-                <span className="font-mono text-[13px] font-black text-t3 tracking-[2px]">·TA</span>
+            {/* Regime accent — thin top line */}
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
+                style={{ background: `linear-gradient(90deg, transparent, ${regimeColor}50, transparent)` }} />
+
+            {/* Brand */}
+            <div className="px-4 flex items-center gap-2 shrink-0" style={{ borderRight: "1px solid var(--b)" }}>
+                <div className="w-1.5 h-1.5 rounded-full live-dot" style={{ backgroundColor: regimeColor }} />
+                <Link href="/" className="font-mono text-12 font-bold tracking-[0.15em] text-t1 hover:text-t0 transition-colors">
+                    SOVEREIGN
+                </Link>
             </div>
 
-            {/* INDEX */}
-            <Cell
-                label="INDEX"
-                value={symbol.replace("NIFTY ", "N·")}
-                valueColor="var(--t1)"
-            />
+            {/* Cells */}
+            <Cell label="INDEX" value={symbol.replace("NIFTY ", "N·")} color="var(--t1)" />
+            <Cell label="SESSION" value={sess.label} color={sess.color} />
+            <Cell label="REGIME" value={regime.replace(/_/g, " ") || "—"} color={regimeColor} />
 
-            {/* SESSION */}
-            <Cell label="SESSION" value={sess.label} valueColor={sess.color} />
-
-            {/* REGIME */}
-            <Cell
-                label="REGIME"
-                value={regime.replace(/_/g, " ") || "—"}
-                valueColor={regimeColor}
-            />
-
-            {/* SCORE */}
-            <div className="px-4 flex flex-col justify-center border-r border-[var(--b)] shrink-0 min-w-[88px]">
-                <div className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.08em] mb-[3px]">SCORE</div>
+            {/* Score with micro-bar */}
+            <div className="px-3 flex flex-col justify-center shrink-0" style={{ borderRight: "1px solid var(--b)" }}>
+                <div className="font-mono text-10 text-t3 tracking-wider mb-0.5">SCORE</div>
                 <div className="flex items-baseline gap-1">
-                    <span
-                        className="font-mono text-[15px] font-black tabular-nums"
-                        style={{
-                            color: score >= 80 ? "var(--bull)" : score >= 65 ? "var(--bl)" : score > 0 ? "var(--t2)" : "var(--t3)",
-                        }}
-                    >
+                    <span className="font-mono text-13 font-bold tabular-nums"
+                        style={{ color: score >= 80 ? "var(--bull)" : score >= 65 ? "var(--blue)" : score > 0 ? "var(--t2)" : "var(--t3)" }}>
                         {score > 0 ? score : "—"}
                     </span>
-                    {score > 0 && (
-                        <span className="font-mono text-[10px] text-t3">/100</span>
-                    )}
+                    {score > 0 && <span className="font-mono text-10 text-t3">/100</span>}
                 </div>
-                {score > 0 && (
-                    <div className="mt-1 h-[2px] bg-[var(--b)] rounded-full overflow-hidden" style={{ width: "52px" }}>
-                        <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{
-                                width: `${score}%`,
-                                backgroundColor: score >= 80 ? "var(--bull)" : score >= 65 ? "var(--bl)" : "var(--wait)",
-                            }}
-                        />
-                    </div>
-                )}
             </div>
 
-            {/* VERDICT */}
+            {/* Verdict */}
             {verdict && (
                 <Cell
                     label="VERDICT"
                     value={verdict.verdict.replace("_TRADE", "").replace("_", " ")}
-                    valueColor={verdictColor}
+                    color={REGIME_COLOR[regime] ?? "var(--t3)"}
                 />
             )}
 
-            {/* RISK */}
+            {/* Risk */}
             <Cell
                 label="RISK"
                 value={shield?.risk_state ?? "—"}
-                valueColor={
+                color={
                     shield?.risk_state === "LOW" ? "var(--bull)" :
-                        shield?.risk_state === "MODERATE" ? "var(--wait)" : "var(--bear)"
+                    shield?.risk_state === "MODERATE" ? "var(--wait)" : "var(--bear)"
                 }
             />
 
             <div className="flex-1" />
 
-            {/* KILL SWITCH */}
+            {/* Kill switch */}
             {shield?.kill_switch && (
-                <div
-                    className="flex items-center px-4 shrink-0 border-l border-[var(--bear)]/30 animate-pulse-slow"
-                    style={{ background: "rgba(255,85,97,0.1)" }}
-                >
-                    <span className="font-mono text-[11px] font-black text-[var(--bear)] tracking-wide">
-                        ⬛ KILL SWITCH
-                    </span>
+                <div className="flex items-center px-3 shrink-0 animate-pulse-slow"
+                    style={{ background: "rgba(248,113,113,0.06)", borderLeft: "1px solid rgba(248,113,113,0.2)" }}>
+                    <span className="font-mono text-10 font-bold text-bear tracking-wider">KILL SWITCH</span>
                 </div>
             )}
 
-            {/* DD */}
+            {/* Drawdown */}
             {shield && !shield.kill_switch && (
-                <div className="flex items-center gap-2.5 px-4 border-l border-[var(--b)] shrink-0">
-                    <span className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.08em]">DD</span>
-                    <div className="w-[52px] h-[3px] bg-[var(--b)] rounded-full overflow-hidden">
-                        <div
-                            className="h-full rounded-full transition-all"
+                <div className="flex items-center gap-2 px-3 shrink-0" style={{ borderLeft: "1px solid var(--b)" }}>
+                    <span className="font-mono text-10 text-t3">DD</span>
+                    <div className="w-10 h-[3px] rounded-full overflow-hidden" style={{ background: "var(--b)" }}>
+                        <div className="h-full rounded-full transition-all duration-700"
                             style={{
                                 width: `${Math.min(100, ddUsed)}%`,
                                 backgroundColor: ddUsed > 70 ? "var(--bear)" : ddUsed > 40 ? "var(--wait)" : "var(--bull)",
-                            }}
-                        />
+                            }} />
                     </div>
-                    <span
-                        className="font-mono text-[11px] font-bold tabular-nums"
-                        style={{ color: ddUsed > 70 ? "var(--bear)" : "var(--t2)" }}
-                    >
-                        {shield.daily_dd_pct.toFixed(2)}%
+                    <span className="font-mono text-11 tabular-nums"
+                        style={{ color: ddUsed > 70 ? "var(--bear)" : "var(--t2)" }}>
+                        {shield.daily_dd_pct.toFixed(1)}%
                     </span>
                 </div>
             )}
 
-            {/* CLOCK */}
-            <div className="flex items-center px-4 border-l border-[var(--b)] shrink-0">
-                <span className="font-mono text-[11px] text-t2 tabular-nums">
+            {/* Clock */}
+            <div className="flex items-center px-4 shrink-0" style={{ borderLeft: "1px solid var(--b)" }}>
+                <span className="font-mono text-11 text-t2 tabular-nums">
                     <LiveClock istTime={session?.ist_time} />
                 </span>
             </div>
-        </div>
+        </header>
     );
 }
 
-function Cell({ label, value, valueColor }: {
-    label: string; value: string; valueColor: string;
-}) {
+function Cell({ label, value, color }: { label: string; value: string; color: string }) {
     return (
-        <div className="px-4 flex flex-col justify-center border-r border-[var(--b)] shrink-0 min-w-[80px]">
-            <div className="font-mono text-[10px] font-bold text-t3 uppercase tracking-[0.08em] mb-[3px] leading-none">
-                {label}
-            </div>
-            <div
-                className="font-mono text-[13px] font-bold leading-none"
-                style={{ color: valueColor }}
-            >
-                {value}
-            </div>
+        <div className="px-3 flex flex-col justify-center shrink-0 min-w-[72px]"
+            style={{ borderRight: "1px solid var(--b)" }}>
+            <div className="font-mono text-10 text-t3 tracking-wider leading-none mb-0.5">{label}</div>
+            <div className="font-mono text-12 font-semibold leading-none truncate" style={{ color }}>{value}</div>
         </div>
     );
 }

@@ -1,106 +1,160 @@
-#!/usr/bin/env bash
-###############################################################################
-# FM Trading Agency v5.0 — install.sh
-#
-# One-command setup for local development (no Docker required).
-# Creates Python venvs, installs deps, copies env files.
-#
-# Usage:
-#   chmod +x install.sh && ./install.sh
-#
-# After install:
-#   ./run.sh              # start all services in tmux (or 5 terminals)
-#   # or start individually:
-#   source fm-bridge/venv/bin/activate && cd fm-bridge && python app.py
-###############################################################################
-
 set -euo pipefail
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+
+SESSION="fm-trading"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
 info()    { echo -e "${BLUE}[INFO]${NC} $*"; }
 success() { echo -e "${GREEN}[OK]${NC}   $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 error()   { echo -e "${RED}[ERR]${NC}  $*"; exit 1; }
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo ""
-echo "  FM Trading Agency v5.0 — Setup"
-echo "  ================================"
+echo "  FM Trading Agency v5.0 — Runtime"
+echo "  ================================="
 echo ""
 
-# ── Check Python & Node ────────────────────────────────────────
-command -v python3 >/dev/null || error "Python 3.10+ required"
-PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-info "Python $PY_VER"
+# ─────────────────────────────────────────────────────────────
+# CHECK ROOT VENV
+# ─────────────────────────────────────────────────────────────
 
-command -v node >/dev/null || error "Node.js 18+ required"
-NODE_VER=$(node --version)
-info "Node $NODE_VER"
+if [ ! -d "$ROOT_DIR/.venv" ]; then
+  error ".venv not found. Run ./install.sh first."
+fi
 
-# ── Python services ────────────────────────────────────────────
-SERVICES=("fm-bridge" "fm-agents" "fm-journal" "fm-alerts")
+# ─────────────────────────────────────────────────────────────
+# CHECK NODE MODULES
+# ─────────────────────────────────────────────────────────────
 
-for svc in "${SERVICES[@]}"; do
+if [ ! -d "$ROOT_DIR/fm-web/node_modules" ]; then
+  warn "fm-web/node_modules missing. Running npm install..."
+  cd "$ROOT_DIR/fm-web"
+  npm install
+  cd "$ROOT_DIR"
+fi
+
+# ─────────────────────────────────────────────────────────────
+# TMUX MODE
+# ─────────────────────────────────────────────────────────────
+
+if command -v tmux >/dev/null 2>&1; then
+
+  # Kill old session if exists
+  if tmux has-session -t "$SESSION" 2>/dev/null; then
+    warn "Existing tmux session found. Killing..."
+    tmux kill-session -t "$SESSION"
+  fi
+
+  info "Starting services in tmux session: $SESSION"
+
+  # Create session
+  tmux new-session -d -s "$SESSION"
+
+  # ── fm-bridge ────────────────────────────────────────────
+  tmux rename-window -t "$SESSION:0" "bridge"
+  tmux send-keys -t "$SESSION:0" "
+    cd '$ROOT_DIR' &&
+    source .venv/bin/activate &&
+    cd fm-bridge &&
+    python app.py
+  " C-m
+
+  # ── fm-agents ────────────────────────────────────────────
+  tmux new-window -t "$SESSION" -n "agents"
+  tmux send-keys -t "$SESSION:1" "
+    cd '$ROOT_DIR' &&
+    source .venv/bin/activate &&
+    cd fm-agents &&
+    python app.py
+  " C-m
+
+  # ── fm-journal ───────────────────────────────────────────
+  tmux new-window -t "$SESSION" -n "journal"
+  tmux send-keys -t "$SESSION:2" "
+    cd '$ROOT_DIR' &&
+    source .venv/bin/activate &&
+    cd fm-journal &&
+    python app.py
+  " C-m
+
+  # ── fm-alerts ────────────────────────────────────────────
+  tmux new-window -t "$SESSION" -n "alerts"
+  tmux send-keys -t "$SESSION:3" "
+    cd '$ROOT_DIR' &&
+    source .venv/bin/activate &&
+    cd fm-alerts &&
+    python app.py
+  " C-m
+
+  # ── fm-web ───────────────────────────────────────────────
+  tmux new-window -t "$SESSION" -n "web"
+  tmux send-keys -t "$SESSION:4" "
+    cd '$ROOT_DIR/fm-web' &&
+    npm run dev
+  " C-m
+
   echo ""
-  info "Installing $svc..."
-  cd "$svc"
+  success "All services started."
+  echo ""
+  echo "  Dashboard:"
+  echo "    http://localhost:3000"
+  echo ""
+  echo "  Attach to logs:"
+  echo "    tmux attach -t $SESSION"
+  echo ""
+  echo "  Stop all:"
+  echo "    tmux kill-session -t $SESSION"
+  echo ""
 
-  # Create venv if it doesn't exist
-  if [ ! -d "venv" ]; then
-    python3 -m venv venv
-  fi
+else
 
-  # Install requirements
-  ./venv/bin/pip install --upgrade pip -q
-  ./venv/bin/pip install -r requirements.txt -q
-  success "$svc installed"
+  # ─────────────────────────────────────────────────────────
+  # FALLBACK MODE (NO TMUX)
+  # ─────────────────────────────────────────────────────────
 
-  # Copy .env if it doesn't exist
-  if [ ! -f ".env" ] && [ -f ".env.example" ]; then
-    cp .env.example .env
-    warn "$svc/.env created from .env.example — fill in your credentials"
-  fi
+  warn "tmux not installed."
+  echo ""
+  echo "Run these commands manually in separate terminals:"
+  echo ""
 
-  cd ..
-done
+  echo "1) fm-bridge"
+  echo "----------------------------------------"
+  echo "cd '$ROOT_DIR'"
+  echo "source .venv/bin/activate"
+  echo "cd fm-bridge && python app.py"
+  echo ""
 
-# ── fm-quant (no server — just needs to be importable by fm-agents) ─
-echo ""
-info "Installing fm-quant..."
-cd fm-quant
-if [ ! -d "venv" ]; then
-  python3 -m venv venv
+  echo "2) fm-agents"
+  echo "----------------------------------------"
+  echo "cd '$ROOT_DIR'"
+  echo "source .venv/bin/activate"
+  echo "cd fm-agents && python app.py"
+  echo ""
+
+  echo "3) fm-journal"
+  echo "----------------------------------------"
+  echo "cd '$ROOT_DIR'"
+  echo "source .venv/bin/activate"
+  echo "cd fm-journal && python app.py"
+  echo ""
+
+  echo "4) fm-alerts"
+  echo "----------------------------------------"
+  echo "cd '$ROOT_DIR'"
+  echo "source .venv/bin/activate"
+  echo "cd fm-alerts && python app.py"
+  echo ""
+
+  echo "5) fm-web"
+  echo "----------------------------------------"
+  echo "cd '$ROOT_DIR/fm-web'"
+  echo "npm run dev"
+  echo ""
+
 fi
-./venv/bin/pip install -r requirements.txt -q 2>/dev/null || true
-success "fm-quant installed"
-if [ ! -f ".env" ] && [ -f ".env.example" ]; then
-  cp .env.example .env
-fi
-cd ..
-
-# ── fm-web (Next.js) ───────────────────────────────────────────
-echo ""
-info "Installing fm-web..."
-cd fm-web
-npm install --silent
-success "fm-web installed"
-if [ ! -f ".env.local" ] && [ -f ".env.local.example" ]; then
-  cp .env.local.example .env.local
-  warn "fm-web/.env.local created — no changes needed for local dev"
-fi
-cd ..
-
-# ── Summary ────────────────────────────────────────────────────
-echo ""
-echo "  ✅  All services installed."
-echo ""
-echo "  📋  Next steps:"
-echo "  1. Fill in your credentials:"
-echo "     fm-bridge/.env    → ZERODHA_USER_ID, ZERODHA_API_KEY, ZERODHA_PASSWORD, ZERODHA_TOTP_SECRET"
-echo "     fm-agents/.env    → GOOGLE_API_KEY (or ANTHROPIC_API_KEY)"
-echo "     fm-alerts/.env    → TELEGRAM_TOKEN, TELEGRAM_CHAT_ID"
-echo ""
-echo "  2. Start all services:"
-echo "     ./run.sh"
-echo ""
-echo "  3. Open the dashboard:"
-echo "     http://localhost:3000"
-echo ""

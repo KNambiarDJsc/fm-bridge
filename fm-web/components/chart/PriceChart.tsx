@@ -30,22 +30,22 @@ export function PriceChart({ symbol, interval = "day", range = "6mo", height = 2
                 width: containerRef.current.clientWidth,
                 height: height,
                 layout: {
-                    background: { color: "#0b0f17" },
-                    textColor: "#8a9ab5",
+                    background: { color: "#050507" },
+                    textColor: "#9aa0a6",
                     fontFamily: "'JetBrains Mono', monospace",
                     fontSize: 10,
                 },
                 grid: {
-                    vertLines: { color: "#1a2232", style: LineStyle.Dotted },
-                    horzLines: { color: "#1a2232", style: LineStyle.Dotted },
+                    vertLines: { color: "rgba(255,255,255,0.04)", style: LineStyle.Dotted },
+                    horzLines: { color: "rgba(255,255,255,0.04)", style: LineStyle.Dotted },
                 },
                 crosshair: {
                     mode: CrosshairMode.Normal,
-                    vertLine: { color: "#3a9eff40", labelBackgroundColor: "#101520" },
-                    horzLine: { color: "#3a9eff40", labelBackgroundColor: "#101520" },
+                    vertLine: { color: "rgba(96,165,250,0.2)", labelBackgroundColor: "#0a0b0f" },
+                    horzLine: { color: "rgba(96,165,250,0.2)", labelBackgroundColor: "#0a0b0f" },
                 },
                 rightPriceScale: {
-                    borderColor: "#1a2232",
+                    borderColor: "rgba(255,255,255,0.06)",
                     scaleMargins: { top: 0.08, bottom: 0.08 },
                 },
                 timeScale: {
@@ -61,12 +61,12 @@ export function PriceChart({ symbol, interval = "day", range = "6mo", height = 2
 
             // Candlestick series
             const series = (chart as ReturnType<typeof createChart>).addCandlestickSeries({
-                upColor: "#0db37a",
-                downColor: "#f04f4f",
-                borderUpColor: "#0db37a",
-                borderDownColor: "#f04f4f",
-                wickUpColor: "#0db37a66",
-                wickDownColor: "#f04f4f66",
+                upColor: "#34d399",
+                downColor: "#f87171",
+                borderUpColor: "#34d399",
+                borderDownColor: "#f87171",
+                wickUpColor: "#34d39966",
+                wickDownColor: "#f8717166",
             });
 
             chartRef.current = chart;
@@ -95,7 +95,7 @@ export function PriceChart({ symbol, interval = "day", range = "6mo", height = 2
 
         const bars = data.data
             .map((row) => ({
-                time: row[0] as string,
+                time: row[0] as unknown as string,
                 open: row[1] as number,
                 high: row[2] as number,
                 low: row[3] as number,
@@ -111,8 +111,8 @@ export function PriceChart({ symbol, interval = "day", range = "6mo", height = 2
     }, [data]);
 
     return (
-        <div className="bg-bg2 border border-b rounded-xl overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-b">
+        <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg-s)", border: "1px solid var(--b)" }}>
+            <div className="flex items-center gap-2 px-4 py-2" style={{ borderBottom: "1px solid var(--b)" }}>
                 <span className="font-mono text-[10px] font-bold text-t2 uppercase tracking-[2px]">
                     {symbol}
                 </span>

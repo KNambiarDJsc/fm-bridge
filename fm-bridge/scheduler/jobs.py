@@ -29,7 +29,7 @@ def _job_options_chain() -> None:
     try:
         from services.options_chain import prefetch_all
         prefetch_all()
-        log.info("✓  Options chain pre-warmed for all indices")
+        log.info("[OK]  Options chain pre-warmed for all indices")
     except Exception as e:
         log.error("Options chain scheduled fetch failed: %s", e)
 
@@ -42,7 +42,7 @@ def _job_global_cues() -> None:
         from services.global_cues import fetch_global_cues
         cues = fetch_global_cues(kite=_kite, force=True)
         log.info(
-            "✓  Global cues: USD/INR=%.2f | GIFT=%s (%+.0f pts) | Dow%+.1f%% | RBI=%s | GlobalRisk=%s",
+            "[OK]  Global cues: USD/INR=%.2f | GIFT=%s (%+.0f pts) | Dow%+.1f%% | RBI=%s | GlobalRisk=%s",
             cues.usd_inr or 0,
             f"{cues.gift_nifty:.0f}" if cues.gift_nifty else "N/A",
             cues.gift_premium or 0,
@@ -75,7 +75,7 @@ def _job_macro_context() -> None:
         from services.macro_context import fetch_macro_context
         ctx = fetch_macro_context(force=True, kite=_kite)
         log.info(
-            "✓  Macro: oil=$%.0f FII=₹%.0fCr VIX=%.1f USD/INR=%.2f GIFT=%s → %s (score %d)",
+            "[OK]  Macro: oil=$%.0f FII=₹%.0fCr VIX=%.1f USD/INR=%.2f GIFT=%s → %s (score %d)",
             ctx.brent_oil or 0, ctx.fii_net or 0, ctx.india_vix or 0,
             ctx.inr_usd or 0,
             f"{ctx.__dict__.get('gift_nifty', 0):.0f}" if ctx.__dict__.get('gift_nifty') else "N/A",
@@ -92,7 +92,7 @@ def _job_heatmap_prewarm() -> None:
         hm = get_multi_index_heatmap(force=True)
         best = hm.best
         log.info(
-            "✓  Heatmap ready — best: %s (%d/100)",
+            "[OK]  Heatmap ready — best: %s (%d/100)",
             best.name if best else "N/A", best.score if best else 0,
         )
     except Exception as e:
@@ -108,7 +108,7 @@ def _job_daily_reset() -> None:
         import services.capital_shield as cs
         cs._shield = None
         cs.get_shield()
-        log.info("✓  Capital shield daily reset done")
+        log.info("[OK]  Capital shield daily reset done")
     except Exception as e:
         log.error("Daily reset failed: %s", e)
 

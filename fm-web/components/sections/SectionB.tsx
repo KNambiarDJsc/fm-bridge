@@ -154,31 +154,31 @@ export function SectionB({ indicators: ind, agentOutputs }: Props) {
                                 <div><div className="font-mono text-[11px] text-t3">Stop</div><div className="font-mono text-[12px] font-bold text-bear">{fmtPrice(bearPivot.stop_level as number)}</div></div>
                                 <div><div className="font-mono text-[11px] text-t3">Target</div><div className="font-mono text-[12px] font-bold text-bull">{fmtPrice(bearPivot.target as number)}</div></div>
                             </div>
-                            {bearPivot.condition && (
-                                <div className="font-mono text-[11px] text-t3">{bearPivot.condition as string}</div>
+                            {typeof bearPivot.condition === "string" && bearPivot.condition && (
+                                <div className="font-mono text-[11px] text-t3">{bearPivot.condition}</div>
                             )}
                         </div>
                     )}
 
                     {/* Targets */}
-                    {((l4.measured_move_target1 as number) || (l4.invalidation_level as number)) && (
+                    {(typeof l4.measured_move_target1 === "number" || typeof l4.invalidation_level === "number") && (
                         <div className="grid grid-cols-3 gap-2 pt-1">
-                            {l4.measured_move_target1 && (
+                            {typeof l4.measured_move_target1 === "number" && (
                                 <div className="bg-bg border border-[var(--b)] rounded p-2">
                                     <div className="font-mono text-[11px] text-t3 uppercase">Target 1</div>
-                                    <div className="font-mono text-[12px] font-bold text-bull">{fmtPrice(l4.measured_move_target1 as number)}</div>
+                                    <div className="font-mono text-[12px] font-bold text-bull">{fmtPrice(l4.measured_move_target1)}</div>
                                 </div>
                             )}
-                            {l4.measured_move_target2 && (
+                            {typeof l4.measured_move_target2 === "number" && (
                                 <div className="bg-bg border border-[var(--b)] rounded p-2">
                                     <div className="font-mono text-[11px] text-t3 uppercase">Target 2</div>
-                                    <div className="font-mono text-[12px] font-bold text-bull">{fmtPrice(l4.measured_move_target2 as number)}</div>
+                                    <div className="font-mono text-[12px] font-bold text-bull">{fmtPrice(l4.measured_move_target2)}</div>
                                 </div>
                             )}
-                            {l4.invalidation_level && (
+                            {typeof l4.invalidation_level === "number" && (
                                 <div className="bg-bg border border-[var(--b)] rounded p-2">
                                     <div className="font-mono text-[11px] text-t3 uppercase">Invalidation</div>
-                                    <div className="font-mono text-[12px] font-bold text-bear">{fmtPrice(l4.invalidation_level as number)}</div>
+                                    <div className="font-mono text-[12px] font-bold text-bear">{fmtPrice(l4.invalidation_level)}</div>
                                 </div>
                             )}
                         </div>
