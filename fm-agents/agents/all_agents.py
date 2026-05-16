@@ -317,7 +317,7 @@ def run_l6_options(state: AgentState, llm) -> dict:
         f'Return JSON: {{"agent":"l6_options_flow","status":"ALLOW|WATCH|BLOCK",'
         f'"options_bias":"BULLISH|BEARISH|NEUTRAL",'
         f'"opr_interpretation":"string","pcr_signal":"string","max_pain_pull":"string",'
-        f'"oi_change_pattern":"{(ci.get(\'oi_change\') or {}).get(\'pattern\',\'NEUTRAL\')}",'
+        f'"oi_change_pattern":"{(ci.get('oi_change') or {}).get('pattern','NEUTRAL')}",'
         f'"call_wall_level":{oc.get("call_wall") or "null"},'
         f'"put_wall_level":{oc.get("put_wall") or "null"},'
         f'"gamma_flip_level":{ci.get("gamma_flip_level") or "null"},'
