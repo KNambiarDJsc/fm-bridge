@@ -16,13 +16,13 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # ── Zerodha ───────────────────────────────────────────────────
-    api_key:      str = Field("", description="Zerodha API key (kite.trade/apps)")
-    api_secret:   str = Field("", description="Zerodha API secret")
+    api_key:      str = Field("", validation_alias="ZERODHA_API_KEY", description="Zerodha API key (kite.trade/apps)")
+    api_secret:   str = Field("", validation_alias="ZERODHA_API_SECRET", description="Zerodha API secret")
 
     # ── TOTP auto-login (store once, never type again) ────────────
-    zerodha_user_id:   Optional[str] = Field(None, description="Zerodha user ID (e.g. ZG1234)")
-    zerodha_password:  Optional[str] = Field(None, description="Zerodha login password")
-    zerodha_totp_key:  Optional[str] = Field(None, description="Base32 TOTP secret from authenticator app")
+    zerodha_user_id:   Optional[str] = Field(None, validation_alias="ZERODHA_USER_ID", description="Zerodha user ID (e.g. ZG1234)")
+    zerodha_password:  Optional[str] = Field(None, validation_alias="ZERODHA_PASSWORD", description="Zerodha login password")
+    zerodha_totp_key:  Optional[str] = Field(None, validation_alias="ZERODHA_TOTP_SECRET", description="Base32 TOTP secret from authenticator app")
 
     # ── Server ────────────────────────────────────────────────────
     bridge_host:  str = Field("0.0.0.0",  description="Bridge bind host")
