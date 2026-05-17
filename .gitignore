@@ -30,3 +30,13 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+# Python
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+venv/
+.Python
+env/
+.pytest_cache/
+.coverage
