@@ -276,7 +276,11 @@ def compute_multi_tf(
             )
             if not data:
                 continue
-            df = pd.DataFrame(data)[["open", "high", "low", "close", "volume"]]
+            df = pd.DataFrame(data)
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"])
+                df.set_index("date", inplace=True)
+            df = df[["open", "high", "low", "close", "volume"]]
             pack = compute_indicators(df, symbol, interval)
             setattr(result, attr, pack)
         except Exception as e:

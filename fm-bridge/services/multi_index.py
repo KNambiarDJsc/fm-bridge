@@ -26,7 +26,7 @@ import pandas as pd
 
 from config import INSTRUMENT_MAP, get_settings
 from models import IndexScore, MultiIndexHeatmap
-from services.indicators import compute_indicators, _ema
+from services.indicators import compute_indicators
 from services.options_chain import fetch_options_chain
 
 import logging
@@ -69,7 +69,11 @@ def _score_one(name: str) -> IndexScore:
         if len(data) < 30:
             return IndexScore(name=name, score=0, error="Insufficient bars")
 
-        df = pd.DataFrame(data)[["open", "high", "low", "close", "volume"]]
+        df = pd.DataFrame(data)
+        if "date" in df.columns:
+            df["date"] = pd.to_datetime(df["date"])
+            df.set_index("date", inplace=True)
+        df = df[["open", "high", "low", "close", "volume"]]
         closes = df["close"].tolist()
         last   = closes[-1]
         prev   = closes[-2] if len(closes) >= 2 else last

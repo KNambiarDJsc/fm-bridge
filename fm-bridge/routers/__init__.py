@@ -156,9 +156,11 @@ def get_indicators(
         return {"error": "No bars available"}
 
     df = pd.DataFrame([
-        {"open": b.open, "high": b.high, "low": b.low, "close": b.close, "volume": b.volume}
+        {"date": b.ts, "open": b.open, "high": b.high, "low": b.low, "close": b.close, "volume": b.volume}
         for b in h.bars
     ])
+    df["date"] = pd.to_datetime(df["date"])
+    df.set_index("date", inplace=True)
     pack = compute_indicators(df, symbol, interval)
     return pack.model_dump()
 
