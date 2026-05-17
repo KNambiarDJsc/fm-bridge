@@ -156,11 +156,9 @@ def get_indicators(
         return {"error": "No bars available"}
 
     df = pd.DataFrame([
-        {"date": b.ts, "open": b.open, "high": b.high, "low": b.low, "close": b.close, "volume": b.volume}
+        {"open": b.open, "high": b.high, "low": b.low, "close": b.close, "volume": b.volume}
         for b in h.bars
     ])
-    df["date"] = pd.to_datetime(df["date"])
-    df.set_index("date", inplace=True)
     pack = compute_indicators(df, symbol, interval)
     return pack.model_dump()
 
@@ -183,6 +181,12 @@ def get_global_cues():
     cues = fetch_global_cues(kite=_kite)
     return cues.to_dict()
 
+
+@context_router.get("/external-intel")
+def get_external_intel():
+    """External intelligence: global markets, Fear & Greed, ADRs, NSE state."""
+    from services.external_intel import get_full_external_intel
+    return get_full_external_intel()
 
 @context_router.get("/event-calendar")
 def get_event_calendar():
