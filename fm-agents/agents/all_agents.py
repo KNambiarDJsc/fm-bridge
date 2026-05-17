@@ -14,6 +14,7 @@ L7-L9 run SEQUENTIALLY after all parallel agents complete
 """
 
 from __future__ import annotations
+import json
 from typing import Any
 
 from schemas.agent_outputs import (
@@ -262,7 +263,7 @@ def run_l5_sentiment(state: AgentState, llm) -> dict:
         f'"volatility_sentiment":"CALM|CAUTIOUS|STRESSED",'
         f'"fear_greed_proxy":0,"fear_greed_label":"Fear|Neutral|Greed",'
         f'"domestic_floor_signal":{str(mc.get("domestic_floor_active",False)).lower()},'
-        f'"top_headlines":{str(headlines[:3])},'
+        f'"top_headlines":{json.dumps(headlines[:3])},'
         f'"legend_consensus":{{"bull":0,"neutral":0,"bear":0,"total":20,"summary":"string"}},'
         f'"confidence":0,"rationale":"2-3 sentences"}}' 
     )
