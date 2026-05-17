@@ -1,0 +1,42 @@
+# FM Trading Agency — Bridge Service
+# Phase 1: Core Infrastructure
+
+# ── Broker ──────────────────────────────────────────────────────
+kiteconnect>=5.0          # Zerodha Kite Connect API + KiteTicker WebSocket
+
+# ── Web Server ──────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+websockets>=15.0
+python-multipart>=0.0.9
+
+# ── Data & Quant ────────────────────────────────────────────────
+pandas>=2.2.0
+pandas-ta>=0.3.14b        # 12+ vectorized indicators
+numpy>=2.0.0
+requests>=2.31.0
+
+# ── Auth ────────────────────────────────────────────────────────
+pyotp>=2.9.0              # TOTP auto-login (no daily manual token)
+python-dotenv>=1.0.0
+
+# ── Scheduling ──────────────────────────────────────────────────
+apscheduler>=3.10.4       # 7 AM options chain, 9 AM macro context
+
+# ── Caching ─────────────────────────────────────────────────────
+# redis[hiredis]>=5.0.0   # Optional: enable for production Redis cache
+# For development, in-memory TTL cache is used instead
+
+# ── Validation & Types ──────────────────────────────────────────
+pydantic>=2.8.0
+pydantic-settings>=2.2.0
+
+# ── Messaging (ZMQ for WebSocket fan-out — OpenAlgo pattern) ────
+pyzmq>=26.0.0
+
+yfinance>=0.2.40          # Global market data (VIX, SPX, Nikkei, USD/INR, ADRs)
+
+# ── Utilities ───────────────────────────────────────────────────
+httpx>=0.27.0             # Async HTTP client for NSE scraping
+python-dateutil>=2.9.0
+pytz>=2024.1

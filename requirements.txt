@@ -130,3 +130,10 @@ PyYAML
 pytest
 pytest-asyncio
 pytest-cov
+
+# ─────────────────────────────────────────────────────────
+# OPTIONAL EXTERNAL APIs
+# ─────────────────────────────────────────────────────────
+# finnhub-python>=0.0.2
+# newsapi-python>=0.2.7
+
