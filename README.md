@@ -134,3 +134,43 @@ Once all services are running, open your browser and navigate to:
 **http://localhost:3000**
 
 Enjoy using your automated, AI-powered Trading Agency!
+
+---
+
+## 🧠 System Workflow: How It Works
+
+The FM Trading Agency is built as a multi-stage pipeline, orchestrating data acquisition, quantitative processing, and LLM-driven reasoning. When a user requests an analysis (or a scheduled job triggers it), the system undergoes a precise lifecycle:
+
+### The `RunAnalysis` Pipeline (Inside `fm-agents`)
+
+1. **Context Building (Phase 1):** 
+   The agent pipeline begins by pulling live market state. It queries `fm-bridge` to fetch the Current Price (LTP), Options Chain, Technical Indicators, Macro Environment variables (like FII/DII data, Brent Crude, USD/INR), and Live News Headlines.
+   
+2. **Quantitative Pre-Processing (`fm-quant`):** 
+   Before any AI agent is invoked, the raw data is passed through `fm-quant`. This engine computes deterministic mathematical models:
+   - **Regime Detection:** Determines if the market is trending, mean-reverting, or volatile.
+   - **Chain Intelligence:** Calculates Max Pain, Gamma Flip Levels, PCR, and Institutional Flow tracking (buildup/covering).
+   - **Risk Governor Limits:** Hardcodes daily drawdown limits, stop-distances based on ATR, and max unit sizing.
+
+3. **Parallel LLM Analysis (L1 to L6):**
+   Using LangGraph, the AI splits into 6 specialized parallel sub-agents to digest the quantified context:
+   - **L1 Macro Sieve:** Analyzes global cues, oil shocks, and overarching market environments.
+   - **L2 Fundamentals:** Checks broad valuations, P/E, and sector leadership.
+   - **L3 Technical:** Interprets EMA stacks, RSI divergences, and Multi-Timeframe alignment.
+   - **L4 Patterns:** Detects chart patterns (e.g., Bull Traps) and calculates measured moves.
+   - **L5 Sentiment:** Analyzes real-time news headlines, RBI events, and fear/greed metrics.
+   - **L6 Options Flow:** Synthesizes institutional dealer stances and execution vehicles (e.g., ATM Calls vs Iron Condors).
+
+4. **Sequential Synthesis (L7 to L9):**
+   - **L7 Strategy Allocation:** Aggregates L1-L6 results to construct three simultaneous plans: Bull, Bear, and Hedge (defining explicit Stop Losses and Targets for each).
+   - **L8 Risk Governor:** A strict non-LLM gatekeeper. If the daily loss limit is breached or a kill-switch is active, it vetos the trade.
+   - **L9 Sovereign Decision Engine:** The final authority. It evaluates the execution score and strictly returns one of: `BULL_TRADE`, `BEAR_TRADE`, `HEDGE_TRADE`, or `WAIT`. It populates exact sizing and execution instructions.
+
+### Microservice Breakdown
+
+* **`fm-bridge` (The Brawn):** Handles all HTTP/WebSocket communication with the Zerodha API. It isolates rate limits, maintains the live token, and provides unified internal REST endpoints (like `/api/ltp`) for the rest of the agency.
+* **`fm-quant` (The Math):** Ensures that the LLMs never perform raw calculations. It provides the "clean numbers" that the agents only have to reason about.
+* **`fm-agents` (The Brains):** Houses the 9-node LangGraph logic and communicates with the Gemini/Claude API to interpret market data.
+* **`fm-journal` (The Memory):** A local SQLite database that records every single `RunAnalysis` execution. It logs the exact parameters, reasoning, and PnL outcomes, enabling robust backtesting and strategy review.
+* **`fm-alerts` (The Mouth):** Listens to state changes and broadcasts critical decisions, risk limit breaches, and EOD briefings directly to your Telegram chat.
+* **`fm-web` (The Eyes):** Your control center. A Next.js interface that visualizes the pipeline's progress, displays the L1-L9 reasoning in a beautiful UI, and acts as the manual trigger for the analysis.
